@@ -1,0 +1,574 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@import url("https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap");
+
+@layer base {
+  :root {
+    /* Base - Light mode (keeping for compatibility) */
+    --background: 210 20% 98%;
+    --foreground: 222 47% 11%;
+
+    --card: 0 0% 100%;
+    --card-foreground: 222 47% 11%;
+
+    --popover: 0 0% 100%;
+    --popover-foreground: 222 47% 11%;
+
+    --primary: 0 85% 42%;
+    --primary-foreground: 0 0% 100%;
+
+    --secondary: 210 40% 96%;
+    --secondary-foreground: 222 47% 11%;
+
+    --muted: 210 40% 96%;
+    --muted-foreground: 215 25% 40%;
+
+    --accent: 210 40% 96%;
+    --accent-foreground: 222 47% 11%;
+
+    --destructive: 0 84% 55%;
+    --destructive-foreground: 0 0% 100%;
+
+    --border: 214 32% 85%;
+    --input: 214 32% 91%;
+    --ring: 221 83% 53%;
+
+    --radius: 0.75rem;
+
+    /* Admin Dashboard Colors - NEW */
+    /* Slate palette */
+    --slate-950: 222 47% 4%;
+    --slate-900: 222 47% 8%;
+    --slate-800: 217 33% 17%;
+    --slate-700: 215 25% 27%;
+    --slate-600: 215 20% 40%;
+    --slate-500: 215 16% 47%;
+    --slate-400: 215 20% 65%;
+
+    /* Emerald/Green (Zarada, Fiskalizovano) */
+    --emerald-600: 160 84% 39%;
+    --emerald-500: 160 84% 45%;
+    --emerald-400: 158 64% 52%;
+    --emerald-300: 156 72% 67%;
+    --green-600: 142 76% 36%;
+
+    /* Amber/Orange (Header, Nefiskalizovano) */
+    --amber-600: 32 95% 44%;
+    --amber-500: 38 92% 50%;
+    --amber-400: 45 93% 47%;
+    --orange-600: 24 95% 53%;
+
+    /* Pink (E-tickets fee, Biletarnica) */
+    --pink-600: 333 71% 51%;
+    --pink-500: 330 81% 60%;
+    --pink-400: 329 86% 70%;
+
+    /* Cyan (Za isplatu) */
+    --cyan-500: 189 94% 43%;
+    --cyan-400: 188 86% 53%;
+
+    /* Blue (Online) */
+    --blue-600: 221 83% 53%;
+    --blue-500: 217 91% 60%;
+    --blue-400: 213 94% 68%;
+
+    /* Sky (Virman) */
+    --sky-500: 199 89% 48%;
+    --sky-400: 198 93% 60%;
+
+    /* Rose (Skrivene) */
+    --rose-500: 355 90% 54%;
+    --rose-400: 351 95% 71%;
+
+    /* Purple (Gratis) */
+    --purple-500: 271 81% 56%;
+    --purple-400: 270 95% 75%;
+
+    /* Red (Banka, Odbici) */
+    --red-500: 0 84% 60%;
+    --red-400: 0 91% 71%;
+
+    /* Channel colors - Updated to match dashboard */
+    --channel-online: 217 91% 60%;
+    --channel-online-bg: 217 91% 95%;
+    --channel-biletarnica: 330 81% 60%;
+    --channel-biletarnica-bg: 330 81% 95%;
+    --channel-virman: 199 89% 48%;
+    --channel-virman-bg: 199 89% 95%;
+    --channel-kartica: 45 93% 47%;
+    --channel-kartica-bg: 45 93% 95%;
+
+    /* Status colors */
+    --success: 160 84% 39%;
+    --success-foreground: 0 0% 100%;
+    --success-text: 160 84% 30%;
+    --warning: 38 92% 50%;
+    --warning-foreground: 0 0% 100%;
+
+    /* Payout specific */
+    --payout-green: 160 84% 39%;
+    --payout-bg: 0 0% 100%;
+    --payout-border: 160 60% 85%;
+
+    /* Gradients */
+    --gradient-primary: linear-gradient(135deg, hsl(38 92% 50%) 0%, hsl(24 95% 53%) 100%);
+    --gradient-success: linear-gradient(135deg, hsl(160 84% 39%) 0%, hsl(142 76% 36%) 100%);
+    --gradient-header: linear-gradient(135deg, hsl(38 92% 50%) 0%, hsl(24 95% 53%) 100%);
+  }
+
+  .dark {
+    --background: 222 47% 4%;
+    --foreground: 210 40% 98%;
+
+    --card: 222 47% 8%;
+    --card-foreground: 210 40% 98%;
+
+    --popover: 222 47% 8%;
+    --popover-foreground: 210 40% 98%;
+
+    --primary: 38 92% 50%;
+    --primary-foreground: 0 0% 100%;
+
+    --secondary: 217 33% 17%;
+    --secondary-foreground: 210 40% 98%;
+
+    --muted: 217 33% 17%;
+    --muted-foreground: 215 20% 65%;
+
+    --accent: 217 33% 17%;
+    --accent-foreground: 210 40% 98%;
+
+    --destructive: 0 63% 31%;
+    --destructive-foreground: 210 40% 98%;
+
+    --border: 217 33% 20%;
+    --input: 217 33% 17%;
+    --ring: 38 92% 50%;
+
+    /* Dark mode channel backgrounds */
+    --channel-online-bg: 217 91% 15%;
+    --channel-biletarnica-bg: 330 81% 15%;
+    --channel-virman-bg: 199 89% 15%;
+    --channel-kartica-bg: 45 93% 15%;
+
+    /* Dark mode payout */
+    --payout-bg: 222 47% 11%;
+    --payout-border: 160 60% 25%;
+  }
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+
+  body {
+    @apply bg-background text-foreground font-sans antialiased;
+    font-family: "Inter", sans-serif;
+    overscroll-behavior: none;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  html {
+    -webkit-tap-highlight-color: transparent;
+    overscroll-behavior: none;
+    height: 100%;
+  }
+}
+
+@layer utilities {
+  .safe-bottom {
+    padding-bottom: env(safe-area-inset-bottom, 0);
+  }
+
+  .safe-top {
+    padding-top: env(safe-area-inset-top, 0);
+  }
+
+  /* Admin Dashboard gradient backgrounds */
+  .bg-gradient-admin {
+    @apply bg-gradient-to-b from-slate-900 to-slate-950;
+  }
+
+  .bg-gradient-header {
+    @apply bg-gradient-to-br from-amber-500 to-orange-600;
+  }
+
+  .bg-gradient-profit {
+    @apply bg-gradient-to-r from-emerald-600 to-green-600;
+  }
+
+  .bg-gradient-card {
+    @apply bg-gradient-to-br from-slate-800/80 to-slate-900/80;
+  }
+
+  /* Payout card styling */
+  .payout-card {
+    @apply bg-slate-800/50 border border-cyan-500/30 rounded-xl;
+  }
+
+  .payout-amount {
+    @apply text-cyan-400 font-bold;
+  }
+
+  /* Profit/Zarada card */
+  .profit-card {
+    @apply bg-gradient-to-r from-emerald-600 to-green-600 rounded-xl shadow-xl;
+  }
+
+  .profit-amount {
+    @apply text-white font-bold;
+  }
+
+  /* Stronger text utilities - Updated */
+  .text-strong {
+    @apply text-white font-semibold;
+  }
+
+  .text-body {
+    @apply text-slate-300;
+  }
+
+  .text-muted-strong {
+    @apply text-slate-400;
+  }
+
+  /* Channel color utilities - Updated */
+  .channel-online {
+    @apply text-blue-400 font-semibold;
+  }
+
+  .channel-biletarnica {
+    @apply text-pink-400 font-semibold;
+  }
+
+  .channel-virman {
+    @apply text-sky-400 font-semibold;
+  }
+
+  .channel-kartica {
+    @apply text-amber-400 font-semibold;
+  }
+
+  /* Status colors */
+  .status-fiscalized {
+    @apply text-emerald-400;
+  }
+
+  .status-not-fiscalized {
+    @apply text-amber-400;
+  }
+
+  .status-hidden {
+    @apply text-rose-400;
+  }
+
+  .status-gratis {
+    @apply text-purple-400;
+  }
+
+  /* Card improvements - Dark theme */
+  .card-clean {
+    @apply bg-slate-800/50 border border-slate-700 rounded-xl;
+  }
+
+  .card-highlight {
+    @apply bg-slate-800/50 border-2 border-amber-500/40 rounded-2xl;
+  }
+}
+
+@layer components {
+  /* Summary card component - Updated for dark theme */
+  .summary-card {
+    @apply bg-slate-800/50 border border-slate-700 rounded-xl p-4;
+  }
+
+  .summary-card-title {
+    @apply text-sm font-medium text-slate-400;
+  }
+
+  .summary-card-value {
+    @apply text-2xl font-bold text-white;
+  }
+
+  /* Channel cards - Updated */
+  .channel-card {
+    @apply bg-slate-800/50 border border-slate-700 rounded-xl p-4;
+  }
+
+  .channel-card-online {
+    @apply border-l-4 border-l-blue-500;
+  }
+
+  .channel-card-biletarnica {
+    @apply border-l-4 border-l-pink-500;
+  }
+
+  .channel-card-virman {
+    @apply border-l-4 border-l-sky-500;
+  }
+
+  .channel-card-kartica {
+    @apply border-l-4 border-l-amber-500;
+  }
+
+  /* Stat cards with colored borders */
+  .stat-card-emerald {
+    @apply bg-slate-800/50 border border-emerald-500/30 rounded-xl;
+  }
+
+  .stat-card-amber {
+    @apply bg-slate-800/50 border border-amber-500/30 rounded-xl;
+  }
+
+  .stat-card-rose {
+    @apply bg-slate-800/50 border border-rose-500/30 rounded-xl;
+  }
+
+  .stat-card-pink {
+    @apply bg-slate-800/50 border border-pink-500/30 rounded-xl;
+  }
+
+  .stat-card-cyan {
+    @apply bg-slate-800/50 border border-cyan-500/30 rounded-xl;
+  }
+
+  .stat-card-blue {
+    @apply bg-slate-800/50 border border-blue-500/30 rounded-xl;
+  }
+
+  .stat-card-red {
+    @apply bg-slate-800/50 border border-red-500/30 rounded-xl;
+  }
+
+  /* Payout highlight card - Updated */
+  .payout-highlight {
+    @apply bg-slate-800/50 border-2 border-cyan-500/40 rounded-xl p-4;
+  }
+
+  .payout-highlight-amount {
+    @apply text-3xl font-bold text-cyan-400;
+  }
+
+  .payout-highlight-label {
+    @apply text-sm font-semibold text-cyan-300;
+  }
+
+  /* Profit highlight card */
+  .profit-highlight {
+    @apply bg-gradient-to-r from-emerald-600 to-green-600 rounded-xl p-4 shadow-xl;
+  }
+
+  .profit-highlight-amount {
+    @apply text-3xl font-bold text-white;
+  }
+
+  .profit-highlight-label {
+    @apply text-sm font-medium text-emerald-100;
+  }
+
+  /* Table styling for dark theme */
+  .table-dark {
+    @apply bg-slate-800/50 rounded-xl overflow-hidden;
+  }
+
+  .table-dark tbody {
+    @apply divide-y divide-slate-700/50;
+  }
+
+  .table-dark td {
+    @apply px-3 py-2;
+  }
+
+  .table-dark .label {
+    @apply text-slate-400;
+  }
+
+  .table-dark .value {
+    @apply text-right text-white font-semibold;
+  }
+
+  /* Event card */
+  .event-card {
+    @apply bg-slate-800/50 border border-slate-700 rounded-2xl overflow-hidden transition-all;
+  }
+
+  .event-card:hover {
+    @apply border-slate-600;
+  }
+
+  .event-card.past {
+    @apply opacity-60;
+  }
+
+  /* Button styles */
+  .btn-primary {
+    @apply bg-gradient-to-br from-amber-500 to-orange-600 text-white rounded-xl font-medium transition-all hover:opacity-90;
+  }
+
+  .btn-secondary {
+    @apply bg-slate-800 hover:bg-slate-700 text-white rounded-lg transition-colors;
+  }
+
+  .btn-success {
+    @apply bg-emerald-600 hover:bg-emerald-500 text-white rounded-lg transition-colors;
+  }
+
+  .btn-info {
+    @apply bg-blue-600 hover:bg-blue-500 text-white rounded-lg transition-colors;
+  }
+
+  /* Filter/Sort buttons */
+  .filter-btn {
+    @apply px-3 py-1.5 rounded-lg text-xs font-medium transition-colors;
+  }
+
+  .filter-btn.active {
+    @apply bg-amber-500/20 text-amber-400 border border-amber-500/30;
+  }
+
+  .filter-btn:not(.active) {
+    @apply text-slate-500 hover:text-slate-300 hover:bg-slate-700/50;
+  }
+
+  /* Header */
+  .header-admin {
+    @apply bg-slate-900/95 backdrop-blur border-b border-slate-800 sticky top-0 z-50;
+  }
+
+  /* Icon containers */
+  .icon-box {
+    @apply rounded-xl flex items-center justify-center;
+  }
+
+  .icon-box-primary {
+    @apply bg-gradient-to-br from-amber-500 to-orange-600;
+  }
+
+  .icon-box-success {
+    @apply bg-gradient-to-br from-emerald-500 to-green-600;
+  }
+}
+
+/* Custom scrollbar - Dark theme */
+::-webkit-scrollbar {
+  width: 4px;
+  height: 4px;
+}
+
+::-webkit-scrollbar-track {
+  background: hsl(217 33% 17%);
+}
+
+::-webkit-scrollbar-thumb {
+  background: hsl(215 20% 40%);
+  border-radius: 2px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: hsl(215 20% 50%);
+}
+
+/* Animations */
+@keyframes pulse-subtle {
+  0%,
+  100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.7;
+  }
+}
+
+@keyframes slide-up {
+  from {
+    opacity: 0;
+    transform: translateY(100%);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes spin-slow {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+@keyframes nav-press {
+  0% {
+    transform: scale(1);
+  }
+  50% {
+    transform: scale(0.92);
+  }
+  100% {
+    transform: scale(1);
+  }
+}
+
+@keyframes shimmer {
+  0% {
+    background-position: -200% 0;
+  }
+  100% {
+    background-position: 200% 0;
+  }
+}
+
+@keyframes glow {
+  0%,
+  100% {
+    box-shadow: 0 0 5px hsl(160 84% 39% / 0.3);
+  }
+  50% {
+    box-shadow: 0 0 20px hsl(160 84% 39% / 0.5);
+  }
+}
+
+.animate-pulse-subtle {
+  animation: pulse-subtle 2s ease-in-out infinite;
+}
+
+.animate-slide-up {
+  animation: slide-up 0.3s ease-out;
+}
+
+.animate-spin-slow {
+  animation: spin-slow 1s linear infinite;
+}
+
+.animate-nav-press {
+  animation: nav-press 0.2s ease-out;
+}
+
+.animate-shimmer {
+  animation: shimmer 2s infinite linear;
+  background: linear-gradient(90deg, hsl(217 33% 17%) 25%, hsl(215 20% 25%) 50%, hsl(217 33% 17%) 75%);
+  background-size: 200% 100%;
+}
+
+.animate-glow {
+  animation: glow 2s ease-in-out infinite;
+}
+
+/* Glassmorphism effect */
+.glass {
+  @apply bg-slate-900/80 backdrop-blur-md border border-slate-700/50;
+}
+
+/* Gradient text */
+.text-gradient-primary {
+  @apply bg-gradient-to-r from-amber-400 to-orange-500 bg-clip-text text-transparent;
+}
+
+.text-gradient-success {
+  @apply bg-gradient-to-r from-emerald-400 to-green-500 bg-clip-text text-transparent;
+}

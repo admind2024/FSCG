@@ -41,7 +41,96 @@ const CATEGORY_COLORS: Record<string, string> = {
   Parter: "hsl(214, 100%, 40%)",
   Tribina: "hsl(199, 89%, 48%)",
   General: "hsl(239, 84%, 67%)",
+  Istok: "hsl(214, 100%, 40%)",
+  Zapad: "hsl(330, 81%, 60%)",
+  Sjever: "hsl(160, 84%, 39%)",
+  Jug: "hsl(24, 95%, 53%)",
 };
+
+// ═══════════════════════════════════════════════════════════════
+// GRUPISANJE TRIBINA - "Istok A", "Istok F" → "Istok"
+// ═══════════════════════════════════════════════════════════════
+
+const TRIBUNE_GROUPS = ["istok", "zapad", "sjever", "jug", "vip"];
+
+function getTribuneGroup(category: string): string {
+  const lower = category.toLowerCase().trim();
+  for (const group of TRIBUNE_GROUPS) {
+    if (lower.startsWith(group)) {
+      // Capitalize first letter
+      return group.charAt(0).toUpperCase() + group.slice(1);
+    }
+  }
+  return category; // Ostale kategorije ostaju kao što jesu
+}
+
+interface GroupedCategoryStats {
+  group: string;
+  count: number;
+  capacity: number;
+  fillPercentage: number;
+  online: number;
+  biletarnica: number;
+  virman: number;
+  kartica: number;
+  amount: number;
+  percentage: number;
+  subcategories: string[];
+}
+
+function groupCategoryStatsByTribune(
+  categoryStats: any[],
+  capacityByCategory: Record<string, number>,
+): GroupedCategoryStats[] {
+  const groupMap = new Map<string, GroupedCategoryStats>();
+  const totalCount = categoryStats.reduce((sum, c) => sum + c.count, 0);
+
+  categoryStats.forEach((cat) => {
+    const group = getTribuneGroup(cat.category);
+
+    if (!groupMap.has(group)) {
+      groupMap.set(group, {
+        group,
+        count: 0,
+        capacity: 0,
+        fillPercentage: 0,
+        online: 0,
+        biletarnica: 0,
+        virman: 0,
+        kartica: 0,
+        amount: 0,
+        percentage: 0,
+        subcategories: [],
+      });
+    }
+
+    const grouped = groupMap.get(group)!;
+    grouped.count += cat.count;
+    grouped.online += cat.online;
+    grouped.biletarnica += cat.biletarnica;
+    grouped.virman += cat.virman;
+    grouped.kartica += cat.kartica;
+    grouped.amount += cat.amount;
+    grouped.subcategories.push(cat.category);
+  });
+
+  // Dodaj kapacitete - grupiši i kapacitete iz baze
+  Object.entries(capacityByCategory).forEach(([catName, cap]) => {
+    const group = getTribuneGroup(catName);
+    const grouped = groupMap.get(group);
+    if (grouped) {
+      grouped.capacity += cap;
+    }
+  });
+
+  // Izračunaj fillPercentage i percentage
+  groupMap.forEach((grouped) => {
+    grouped.fillPercentage = grouped.capacity > 0 ? (grouped.count / grouped.capacity) * 100 : 0;
+    grouped.percentage = totalCount > 0 ? (grouped.count / totalCount) * 100 : 0;
+  });
+
+  return Array.from(groupMap.values()).sort((a, b) => b.count - a.count);
+}
 
 const DEFAULT_COLORS = [
   "hsl(214, 100%, 40%)",
@@ -514,10 +603,13 @@ export default function CategoriesScreen() {
 
   const currency = selectedEvent.currency;
 
-  const chartData = categoryStats.map((cat, idx) => ({
-    name: cat.category,
-    value: cat.count,
-    fill: getCategoryColor(cat.category, idx),
+  // GRUPISANE TRIBINE
+  const groupedStats = groupCategoryStatsByTribune(categoryStats, selectedEvent.capacityByCategory || {});
+
+  const chartData = groupedStats.map((g, idx) => ({
+    name: g.group,
+    value: g.count,
+    fill: getCategoryColor(g.group, idx),
   }));
 
   return (
@@ -637,7 +729,7 @@ export default function CategoriesScreen() {
           <CardHeader className="pb-2">
             <CardTitle className="text-sm flex items-center gap-2">
               <Layers className="w-4 h-4" />
-              Distribucija po Kategorijama
+              Distribucija po Tribinama
             </CardTitle>
           </CardHeader>
           <CardContent>
@@ -663,9 +755,8 @@ export default function CategoriesScreen() {
                   </Pie>
                   <Tooltip
                     formatter={(value: number, name: string) => {
-                      const cat = categoryStats.find((c) => c.category === name);
-                      const catAlloc = calculateCategoryAllocations(allocations, name);
-                      const remaining = cat ? cat.capacity - cat.count - catAlloc.total : 0;
+                      const g = groupedStats.find((gs) => gs.group === name);
+                      const remaining = g ? Math.max(0, g.capacity - g.count) : 0;
                       return [`${value} prodato / ${remaining} preostalo`, name];
                     }}
                     contentStyle={{ fontSize: 12, borderRadius: 8 }}
@@ -673,7 +764,7 @@ export default function CategoriesScreen() {
                 </PieChart>
               </ResponsiveContainer>
             </div>
-            <p className="text-center text-xs text-muted-foreground mt-2">Klikni kategoriju za detalje</p>
+            <p className="text-center text-xs text-muted-foreground mt-2">Klikni tribinu za detalje</p>
           </CardContent>
         </Card>
 
@@ -682,32 +773,31 @@ export default function CategoriesScreen() {
           <CardHeader className="pb-2">
             <CardTitle className="text-sm flex items-center gap-2">
               <TrendingUp className="w-4 h-4" />
-              Pregled Kategorija
+              Pregled Tribina
             </CardTitle>
           </CardHeader>
           <CardContent>
             <div className="space-y-2 max-h-72 overflow-y-auto">
-              {categoryStats.map((cat, idx) => {
-                const catColor = getCategoryColor(cat.category, idx);
-                const catAlloc = calculateCategoryAllocations(allocations, cat.category);
-                const remaining = Math.max(0, cat.capacity - cat.count - catAlloc.total);
-                const fillPct = cat.capacity > 0 ? ((cat.count + catAlloc.total) / cat.capacity) * 100 : 0;
-                
+              {groupedStats.map((g, idx) => {
+                const gColor = getCategoryColor(g.group, idx);
+                const remaining = Math.max(0, g.capacity - g.count);
+                const fillPct = g.capacity > 0 ? (g.count / g.capacity) * 100 : 0;
+
                 return (
-                  <div 
-                    key={cat.category} 
+                  <div
+                    key={g.group}
                     className="flex items-center gap-3 p-2 rounded-lg hover:bg-muted/50 transition-colors cursor-pointer"
-                    onClick={() => setSelectedCategory(cat.category)}
+                    onClick={() => setSelectedCategory(g.group)}
                   >
-                    <div 
-                      className="w-3 h-3 rounded-full flex-shrink-0" 
-                      style={{ backgroundColor: catColor }}
+                    <div
+                      className="w-3 h-3 rounded-full flex-shrink-0"
+                      style={{ backgroundColor: gColor }}
                     />
                     <div className="flex-1 min-w-0">
                       <div className="flex justify-between items-center mb-1">
-                        <span className="text-sm font-medium truncate">{cat.category}</span>
+                        <span className="text-sm font-medium truncate">{g.group}</span>
                         <span className="text-xs text-muted-foreground ml-2">
-                          {cat.count}/{cat.capacity}
+                          {g.count}/{g.capacity}
                         </span>
                       </div>
                       <Progress value={fillPct} className="h-1.5" />
@@ -729,7 +819,7 @@ export default function CategoriesScreen() {
         <CardHeader className="pb-2">
           <CardTitle className="text-sm flex items-center gap-2">
             <Layers className="w-4 h-4" />
-            Statistika po Kategorijama
+            Statistika po Tribinama
           </CardTitle>
         </CardHeader>
         <CardContent className="p-0">
@@ -738,7 +828,7 @@ export default function CategoriesScreen() {
               <thead>
                 <tr className="border-b bg-gray-100 dark:bg-gray-800">
                   <th className="sticky left-0 z-10 bg-gray-100 dark:bg-gray-800 px-2 py-2 text-left font-semibold min-w-[120px] border-r shadow-[2px_0_4px_-2px_rgba(0,0,0,0.15)]">
-                    Kategorija
+                    Tribina
                   </th>
                   <th className="px-2 py-2 text-right font-semibold bg-success/10">Prodato</th>
                   <th className="px-2 py-2 text-right font-semibold bg-purple-50">Gratis</th>
@@ -767,17 +857,33 @@ export default function CategoriesScreen() {
                 </tr>
               </thead>
               <tbody>
-                {categoryStats.map((cat, idx) => {
-                  const catColor = getCategoryColor(cat.category, idx);
-                  const gratisInCat = gratisByCategory.find((g) => g.category === cat.category);
-                  const catAlloc = calculateCategoryAllocations(allocations, cat.category);
-                  const realAvailable = Math.max(0, cat.capacity - cat.count - catAlloc.total);
+                {groupedStats.map((g, idx) => {
+                  const gColor = getCategoryColor(g.group, idx);
+                  // Saberi gratis iz svih potkategorija ove grupe
+                  const gratisInGroup = gratisByCategory
+                    .filter((gr) => g.subcategories.includes(gr.category))
+                    .reduce((sum, gr) => sum + gr.count, 0);
+                  // Saberi alokacije iz svih potkategorija
+                  const groupAllocTotal = g.subcategories.reduce((sum, sub) => {
+                    return sum + calculateCategoryAllocations(allocations, sub).total;
+                  }, 0);
+                  const groupAllocReserved = g.subcategories.reduce((sum, sub) => {
+                    return sum + calculateCategoryAllocations(allocations, sub).reserved;
+                  }, 0);
+                  const groupAllocByChannel: Record<string, number> = {};
+                  g.subcategories.forEach((sub) => {
+                    const subAlloc = calculateCategoryAllocations(allocations, sub);
+                    Object.entries(subAlloc.byChannel).forEach(([ch, cnt]) => {
+                      groupAllocByChannel[ch] = (groupAllocByChannel[ch] || 0) + cnt;
+                    });
+                  });
+                  const realAvailable = Math.max(0, g.capacity - g.count - groupAllocTotal);
 
                   return (
                     <tr
-                      key={cat.category}
+                      key={g.group}
                       className={`${idx % 2 === 0 ? "bg-card" : "bg-muted/20"} cursor-pointer hover:bg-muted/40 transition-colors`}
-                      onClick={() => setSelectedCategory(cat.category)}
+                      onClick={() => setSelectedCategory(g.group)}
                     >
                       <td
                         className={`sticky left-0 z-10 px-2 py-2 border-r shadow-[2px_0_4px_-2px_rgba(0,0,0,0.15)] whitespace-nowrap ${
@@ -787,60 +893,58 @@ export default function CategoriesScreen() {
                         <span
                           className="px-2 py-0.5 rounded text-[10px] font-semibold border whitespace-nowrap"
                           style={{
-                            borderColor: catColor,
-                            color: catColor,
+                            borderColor: gColor,
+                            color: gColor,
                             backgroundColor: "transparent",
                           }}
                         >
-                          {cat.category}
+                          {g.group}
                         </span>
+                        {g.subcategories.length > 1 && (
+                          <span className="ml-1 text-[9px] text-muted-foreground">({g.subcategories.length})</span>
+                        )}
                       </td>
 
                       <td className="px-2 py-2 text-right font-semibold text-success bg-success/5">
-                        {cat.count - (gratisInCat?.count || 0)}
+                        {g.count - gratisInGroup}
                       </td>
 
                       <td className="px-2 py-2 text-right font-medium text-purple-600 bg-purple-50">
-                        {gratisInCat?.count || 0}
+                        {gratisInGroup || 0}
                       </td>
 
-                      {/* DINAMIČKE KOLONE ZA EKSTERNE KANALE */}
                       {Object.keys(allocationSummary.byChannel)
                         .sort()
-                        .map((channel) => {
-                          const channelAmount = catAlloc.byChannel[channel] || 0;
-                          return (
-                            <td key={channel} className="px-2 py-2 text-right font-medium text-orange-600 bg-orange-50">
-                              {channelAmount || "-"}
-                            </td>
-                          );
-                        })}
+                        .map((channel) => (
+                          <td key={channel} className="px-2 py-2 text-right font-medium text-orange-600 bg-orange-50">
+                            {groupAllocByChannel[channel] || "-"}
+                          </td>
+                        ))}
 
-                      {/* REZERVISANO */}
                       {allocationSummary.reserved > 0 && (
                         <td className="px-2 py-2 text-right font-medium text-blue-600 bg-blue-50">
-                          {catAlloc.reserved || "-"}
+                          {groupAllocReserved || "-"}
                         </td>
                       )}
 
-                      <td className="px-2 py-2 text-right text-muted-foreground">{cat.capacity || "-"}</td>
+                      <td className="px-2 py-2 text-right text-muted-foreground">{g.capacity || "-"}</td>
 
                       <td className="px-2 py-2 text-right font-semibold text-green-600 bg-green-50">{realAvailable}</td>
 
                       <td className="px-2 py-2 text-right bg-channel-online-bg/20 text-channel-online font-medium">
-                        {cat.online || "-"}
+                        {g.online || "-"}
                       </td>
                       <td className="px-2 py-2 text-right bg-channel-biletarnica-bg/20 text-channel-biletarnica font-medium">
-                        {cat.biletarnica || "-"}
+                        {g.biletarnica || "-"}
                       </td>
                       <td className="px-2 py-2 text-right bg-channel-virman-bg/20 text-channel-virman font-medium">
-                        {cat.virman || "-"}
+                        {g.virman || "-"}
                       </td>
                       <td className="px-2 py-2 text-right bg-channel-kartica-bg/20 text-channel-kartica font-medium">
-                        {cat.kartica || "-"}
+                        {g.kartica || "-"}
                       </td>
                       <td className="px-2 py-2 text-right bg-success/5 font-semibold text-success">
-                        {formatCurrencyNoDecimals(cat.amount, currency, exchangeRate, false)}
+                        {formatCurrencyNoDecimals(g.amount, currency, exchangeRate, false)}
                       </td>
                     </tr>
                   );
@@ -875,20 +979,20 @@ export default function CategoriesScreen() {
                   <td className="px-2 py-2 text-right text-green-600 bg-green-50">{realRemaining}</td>
 
                   <td className="px-2 py-2 text-right bg-channel-online-bg/30">
-                    {categoryStats.reduce((sum, c) => sum + c.online, 0)}
+                    {groupedStats.reduce((sum, c) => sum + c.online, 0)}
                   </td>
                   <td className="px-2 py-2 text-right bg-channel-biletarnica-bg/30">
-                    {categoryStats.reduce((sum, c) => sum + c.biletarnica, 0)}
+                    {groupedStats.reduce((sum, c) => sum + c.biletarnica, 0)}
                   </td>
                   <td className="px-2 py-2 text-right bg-channel-virman-bg/30">
-                    {categoryStats.reduce((sum, c) => sum + c.virman, 0)}
+                    {groupedStats.reduce((sum, c) => sum + c.virman, 0)}
                   </td>
                   <td className="px-2 py-2 text-right bg-channel-kartica-bg/30">
-                    {categoryStats.reduce((sum, c) => sum + c.kartica, 0)}
+                    {groupedStats.reduce((sum, c) => sum + c.kartica, 0)}
                   </td>
                   <td className="px-2 py-2 text-right bg-success/10 text-success">
                     {formatCurrencyNoDecimals(
-                      categoryStats.reduce((sum, c) => sum + c.amount, 0),
+                      groupedStats.reduce((sum, c) => sum + c.amount, 0),
                       currency,
                       exchangeRate,
                       false,
@@ -1035,46 +1139,54 @@ export default function CategoriesScreen() {
         </Card>
       )}
 
-      {/* Category Detail Drawer - SA ALOKACIJAMA IZ BAZE */}
+      {/* Tribune Detail Drawer */}
       <Drawer open={!!selectedCategory} onOpenChange={(open) => !open && setSelectedCategory(null)}>
         <DrawerContent>
           {selectedCategory &&
             (() => {
-              const cat = categoryStats.find((c) => c.category === selectedCategory);
-              if (!cat) return null;
+              const g = groupedStats.find((gs) => gs.group === selectedCategory);
+              if (!g) return null;
 
-              const gratisInCat = gratisByCategory.find((g) => g.category === selectedCategory);
-              const catAlloc = calculateCategoryAllocations(allocations, selectedCategory);
-              const remaining = Math.max(0, cat.capacity - cat.count - catAlloc.total);
+              const gratisInGroup = gratisByCategory
+                .filter((gr) => g.subcategories.includes(gr.category))
+                .reduce((sum, gr) => sum + gr.count, 0);
+              const groupAllocTotal = g.subcategories.reduce((sum, sub) => {
+                return sum + calculateCategoryAllocations(allocations, sub).total;
+              }, 0);
+              const remaining = Math.max(0, g.capacity - g.count - groupAllocTotal);
 
-              const catIndex = categoryStats.findIndex((c) => c.category === selectedCategory);
-              const catColor = getCategoryColor(selectedCategory, catIndex);
+              const gIndex = groupedStats.findIndex((gs) => gs.group === selectedCategory);
+              const gColor = getCategoryColor(selectedCategory, gIndex);
 
               return (
                 <>
                   <DrawerHeader className="text-center pb-2">
                     <DrawerTitle className="flex items-center justify-center gap-2">
-                      <div className="w-4 h-4 rounded" style={{ backgroundColor: catColor }} />
+                      <div className="w-4 h-4 rounded" style={{ backgroundColor: gColor }} />
                       {selectedCategory}
                     </DrawerTitle>
-                    <DrawerDescription>Detalji kategorije</DrawerDescription>
+                    <DrawerDescription>
+                      {g.subcategories.length > 1
+                        ? `Sadrži: ${g.subcategories.join(", ")}`
+                        : "Detalji tribine"}
+                    </DrawerDescription>
                   </DrawerHeader>
 
                   <div className="px-4 pb-6 space-y-4">
                     <div className="grid grid-cols-4 gap-2">
                       <div className="bg-success/10 rounded-lg p-3 text-center">
                         <Ticket className="w-5 h-5 mx-auto mb-1 text-success" />
-                        <p className="text-xl font-bold text-success">{cat.count - (gratisInCat?.count || 0)}</p>
+                        <p className="text-xl font-bold text-success">{g.count - gratisInGroup}</p>
                         <p className="text-[10px] text-muted-foreground">Prodato</p>
                       </div>
                       <div className="bg-purple-50 rounded-lg p-3 text-center">
                         <Gift className="w-5 h-5 mx-auto mb-1 text-purple-600" />
-                        <p className="text-xl font-bold text-purple-600">{gratisInCat?.count || 0}</p>
+                        <p className="text-xl font-bold text-purple-600">{gratisInGroup}</p>
                         <p className="text-[10px] text-muted-foreground">Gratis</p>
                       </div>
                       <div className="bg-orange-50 rounded-lg p-3 text-center">
                         <ExternalLink className="w-5 h-5 mx-auto mb-1 text-orange-600" />
-                        <p className="text-xl font-bold text-orange-600">{catAlloc.total}</p>
+                        <p className="text-xl font-bold text-orange-600">{groupAllocTotal}</p>
                         <p className="text-[10px] text-muted-foreground">Alocir.</p>
                       </div>
                       <div className="bg-green-50 rounded-lg p-3 text-center">
@@ -1084,35 +1196,36 @@ export default function CategoriesScreen() {
                       </div>
                     </div>
 
-                    {catAlloc.total > 0 && (
-                      <div className="bg-orange-50 border border-orange-200 rounded-lg p-3">
-                        <p className="text-xs font-semibold text-orange-700 mb-2">Alokacije:</p>
-                        <div className="space-y-1 text-xs">
-                          {catAlloc.reserved > 0 && (
-                            <div className="flex justify-between">
-                              <span className="text-muted-foreground">Rezervisano:</span>
-                              <span className="font-semibold">{catAlloc.reserved}</span>
-                            </div>
-                          )}
-                          {Object.entries(catAlloc.byChannel).map(([channel, count]) => (
-                            <div key={channel} className="flex justify-between">
-                              <span className="text-muted-foreground">{channel}:</span>
-                              <span className="font-semibold">{count}</span>
-                            </div>
-                          ))}
+                    {/* Potkategorije - detalji */}
+                    {g.subcategories.length > 1 && (
+                      <div className="bg-muted/30 border rounded-lg p-3">
+                        <p className="text-xs font-semibold text-muted-foreground mb-2">Potkategorije:</p>
+                        <div className="space-y-1.5 text-xs">
+                          {g.subcategories.map((sub) => {
+                            const subStat = categoryStats.find((c) => c.category === sub);
+                            return (
+                              <div key={sub} className="flex justify-between items-center">
+                                <span className="text-foreground font-medium">{sub}</span>
+                                <div className="flex gap-3">
+                                  <span className="text-success font-semibold">{subStat?.count || 0}</span>
+                                  <span className="text-muted-foreground">/ {subStat?.capacity || 0}</span>
+                                </div>
+                              </div>
+                            );
+                          })}
                         </div>
                       </div>
                     )}
 
-                    {cat.capacity > 0 && (
+                    {g.capacity > 0 && (
                       <div className="space-y-1">
                         <div className="flex justify-between text-xs">
-                          <span className="text-muted-foreground">Popunjenost (sa alokacijama)</span>
+                          <span className="text-muted-foreground">Popunjenost</span>
                           <span className="font-semibold">
-                            {(((cat.count + catAlloc.total) / cat.capacity) * 100).toFixed(1)}%
+                            {(((g.count + groupAllocTotal) / g.capacity) * 100).toFixed(1)}%
                           </span>
                         </div>
-                        <Progress value={((cat.count + catAlloc.total) / cat.capacity) * 100} className="h-2" />
+                        <Progress value={((g.count + groupAllocTotal) / g.capacity) * 100} className="h-2" />
                       </div>
                     )}
 
@@ -1122,28 +1235,28 @@ export default function CategoriesScreen() {
                         <div className="flex items-center gap-2 bg-channel-online-bg/30 rounded-lg p-2">
                           <Globe className="w-4 h-4 text-channel-online" />
                           <div>
-                            <p className="text-sm font-semibold text-channel-online">{cat.online || 0}</p>
+                            <p className="text-sm font-semibold text-channel-online">{g.online || 0}</p>
                             <p className="text-[10px] text-muted-foreground">Online</p>
                           </div>
                         </div>
                         <div className="flex items-center gap-2 bg-channel-biletarnica-bg/30 rounded-lg p-2">
                           <Building2 className="w-4 h-4 text-channel-biletarnica" />
                           <div>
-                            <p className="text-sm font-semibold text-channel-biletarnica">{cat.biletarnica || 0}</p>
+                            <p className="text-sm font-semibold text-channel-biletarnica">{g.biletarnica || 0}</p>
                             <p className="text-[10px] text-muted-foreground">Biletarnica</p>
                           </div>
                         </div>
                         <div className="flex items-center gap-2 bg-channel-virman-bg/30 rounded-lg p-2">
                           <ShoppingCart className="w-4 h-4 text-channel-virman" />
                           <div>
-                            <p className="text-sm font-semibold text-channel-virman">{cat.virman || 0}</p>
+                            <p className="text-sm font-semibold text-channel-virman">{g.virman || 0}</p>
                             <p className="text-[10px] text-muted-foreground">Virman</p>
                           </div>
                         </div>
                         <div className="flex items-center gap-2 bg-channel-kartica-bg/30 rounded-lg p-2">
                           <CreditCard className="w-4 h-4 text-channel-kartica" />
                           <div>
-                            <p className="text-sm font-semibold text-channel-kartica">{cat.kartica || 0}</p>
+                            <p className="text-sm font-semibold text-channel-kartica">{g.kartica || 0}</p>
                             <p className="text-[10px] text-muted-foreground">Kartica</p>
                           </div>
                         </div>
@@ -1153,7 +1266,7 @@ export default function CategoriesScreen() {
                     <div className="bg-success/10 rounded-lg p-3 text-center">
                       <p className="text-xs text-muted-foreground mb-1">Ukupan prihod</p>
                       <p className="text-2xl font-bold text-success">
-                        {formatCurrencyNoDecimals(cat.amount, currency, exchangeRate)}
+                        {formatCurrencyNoDecimals(g.amount, currency, exchangeRate)}
                       </p>
                     </div>
                   </div>

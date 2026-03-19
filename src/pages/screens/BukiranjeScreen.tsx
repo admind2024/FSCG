@@ -199,9 +199,9 @@ function exportToPDF(
           border-radius: 6px;
           border: 1px solid;
         }
-        .summary-box.orange { 
-          background: #fff7ed; 
-          border-color: #fdba74; 
+        .summary-box.orange {
+          background: #fff1f2;
+          border-color: #fca5a5;
         }
         .summary-box.green { 
           background: #f0fdf4; 
@@ -216,7 +216,7 @@ function exportToPDF(
           font-weight: 700;
           line-height: 1.2;
         }
-        .summary-box.orange .value { color: #ea580c; }
+        .summary-box.orange .value { color: #C8102E; }
         .summary-box.green .value { color: #16a34a; }
         .summary-box.blue .value { color: #2563eb; }
         .summary-box .label {
@@ -235,7 +235,7 @@ function exportToPDF(
           display: table-header-group;
         }
         th {
-          background: #f97316;
+          background: #C8102E;
           color: white;
           padding: 8px 6px;
           text-align: left;
@@ -256,7 +256,7 @@ function exportToPDF(
           text-align: right;
         }
         tr:nth-child(even) {
-          background: #fffbeb;
+          background: #f9fafb;
         }
         .col-seat { width: 28%; }
         .col-guest { width: 25%; }
@@ -272,7 +272,7 @@ function exportToPDF(
           font-size: 9px;
         }
         .tickets {
-          color: #ea580c;
+          color: #1e293b;
           font-weight: 700;
         }
         .amount {
@@ -280,19 +280,19 @@ function exportToPDF(
           font-weight: 700;
         }
         .footer-row {
-          background: #fef3c7 !important;
-          border-top: 2px solid #f59e0b;
+          background: #f1f5f9 !important;
+          border-top: 2px solid #C8102E;
         }
         .footer-row td {
           padding: 10px 6px;
           font-weight: 700;
         }
         .footer-row .label {
-          color: #92400e;
+          color: #1e293b;
           font-size: 10px;
         }
         .footer-row .tickets {
-          color: #92400e;
+          color: #1e293b;
           font-size: 11px;
         }
         .footer-row .amount {
@@ -442,20 +442,20 @@ export default function BukiranjeScreen() {
   return (
     <div className="p-3 md:p-6 space-y-3 md:space-y-4 animate-slide-up">
       {/* Header info */}
-      <div className="bg-orange-50 border border-orange-200 rounded-lg p-3">
-        <div className="flex items-center gap-2 text-orange-700">
+      <div className="bg-slate-100 border border-slate-200 rounded-lg p-3 dark:bg-slate-800/50 dark:border-slate-700">
+        <div className="flex items-center gap-2 text-slate-700 dark:text-slate-300">
           <Bookmark className="w-4 h-4" />
           <span className="text-sm font-medium">Rezervacije organizatora</span>
-          <span className="text-[10px] bg-orange-200 px-2 py-0.5 rounded ml-auto">Bez provizije e-tickets</span>
+          <span className="text-[10px] bg-slate-200 dark:bg-slate-700 px-2 py-0.5 rounded ml-auto">Bez provizije e-tickets</span>
         </div>
       </div>
 
       {/* Summary Cards */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-2 md:gap-4">
-        <Card className="border-l-4 border-l-orange-500">
+        <Card className="border-l-4 border-l-red-600">
           <CardContent className="p-3 text-center">
-            <Ticket className="w-5 h-5 mx-auto mb-1 text-orange-500" />
-            <p className="text-xl font-bold text-orange-600">{stats.totalTickets}</p>
+            <Ticket className="w-5 h-5 mx-auto mb-1 text-red-600" />
+            <p className="text-xl font-bold text-red-600">{stats.totalTickets}</p>
             <p className="text-[10px] text-muted-foreground">Ukupno karata</p>
           </CardContent>
         </Card>
@@ -511,7 +511,7 @@ export default function BukiranjeScreen() {
                 <div key={idx} className="flex items-center justify-between p-3 hover:bg-muted/50">
                   <p className="font-medium text-sm">{item.date}</p>
                   <div className="text-right">
-                    <p className="font-semibold text-orange-600">{item.count} karata</p>
+                    <p className="font-semibold text-slate-700 dark:text-slate-300">{item.count} karata</p>
                     <p className="text-xs text-green-600">
                       {formatCurrencyNoDecimals(item.amount, currency, exchangeRate)}
                     </p>
@@ -529,7 +529,7 @@ export default function BukiranjeScreen() {
           <CardHeader className="pb-2">
             <CardTitle className="text-sm flex items-center justify-between">
               <div className="flex items-center gap-2">
-                <UtensilsCrossed className="w-4 h-4 text-amber-600" />
+                <UtensilsCrossed className="w-4 h-4 text-slate-500" />
                 Rezervacije ({stats.totalTables})
               </div>
               <Button variant="outline" size="sm" onClick={handleExportPDF} className="h-7 px-3 text-xs gap-1.5">
@@ -574,7 +574,7 @@ export default function BukiranjeScreen() {
                         <TableCell className="font-medium text-xs">{formatSeatDisplay(table.seatId)}</TableCell>
                         <TableCell className="text-xs text-blue-600 font-medium">{table.customerName}</TableCell>
                         <TableCell className="text-xs text-muted-foreground">{table.customerPhone}</TableCell>
-                        <TableCell className="text-right text-xs font-semibold text-orange-600">
+                        <TableCell className="text-right text-xs font-semibold text-slate-700 dark:text-slate-300">
                           {table.tickets}
                         </TableCell>
                         <TableCell className="text-right text-xs font-semibold text-green-600">
@@ -593,10 +593,10 @@ export default function BukiranjeScreen() {
               </Table>
             </div>
 
-            <div className="flex items-center justify-between p-3 bg-amber-50 rounded-lg border border-amber-200">
-              <span className="font-medium text-amber-800">Ukupno:</span>
+            <div className="flex items-center justify-between p-3 bg-slate-100 rounded-lg border border-slate-200 dark:bg-slate-800/50 dark:border-slate-700">
+              <span className="font-medium text-slate-700 dark:text-slate-300">Ukupno:</span>
               <div className="text-right">
-                <span className="font-bold text-amber-700">{stats.totalTickets} karata</span>
+                <span className="font-bold text-slate-800 dark:text-slate-200">{stats.totalTickets} karata</span>
                 <span className="text-green-600 font-semibold ml-3">
                   {formatCurrencyNoDecimals(stats.totalAmount, currency, exchangeRate)}
                 </span>

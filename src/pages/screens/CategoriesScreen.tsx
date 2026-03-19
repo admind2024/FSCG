@@ -392,26 +392,26 @@ function exportTablesToPDF(tables: TableItem[], eventName: string, totalTables: 
         * { margin: 0; padding: 0; box-sizing: border-box; }
         body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; font-size: 10px; line-height: 1.3; color: #1f2937; background: white; }
         .header { text-align: center; margin-bottom: 15px; padding-bottom: 12px; border-bottom: 3px solid #d97706; }
-        .header h1 { font-size: 18px; font-weight: 700; color: #d97706; margin-bottom: 4px; letter-spacing: -0.5px; }
+        .header h1 { font-size: 18px; font-weight: 700; color: #C8102E; margin-bottom: 4px; letter-spacing: -0.5px; }
         .header .event-name { font-size: 13px; color: #4b5563; font-weight: 500; }
         .header .date { font-size: 9px; color: #9ca3af; margin-top: 4px; }
         .summary { display: flex; justify-content: center; gap: 12px; margin-bottom: 15px; }
         .summary-box { flex: 0 1 120px; text-align: center; padding: 10px 8px; border-radius: 6px; border: 1px solid; }
-        .summary-box.amber { background: #fffbeb; border-color: #fcd34d; }
+        .summary-box.amber { background: #fff1f2; border-color: #fca5a5; }
         .summary-box.blue { background: #eff6ff; border-color: #93c5fd; }
         .summary-box.green { background: #f0fdf4; border-color: #86efac; }
         .summary-box .value { font-size: 16px; font-weight: 700; line-height: 1.2; }
-        .summary-box.amber .value { color: #d97706; }
+        .summary-box.amber .value { color: #C8102E; }
         .summary-box.blue .value { color: #2563eb; }
         .summary-box.green .value { color: #16a34a; }
         .summary-box .label { font-size: 8px; color: #6b7280; text-transform: uppercase; letter-spacing: 0.5px; margin-top: 2px; }
         table { width: 100%; border-collapse: collapse; font-size: 9px; }
         thead { display: table-header-group; }
-        th { background: #d97706; color: white; padding: 8px 6px; text-align: left; font-weight: 600; font-size: 9px; text-transform: uppercase; letter-spacing: 0.3px; }
+        th { background: #C8102E; color: white; padding: 8px 6px; text-align: left; font-weight: 600; font-size: 9px; text-transform: uppercase; letter-spacing: 0.3px; }
         th:last-child { text-align: right; }
         td { padding: 6px; border-bottom: 1px solid #e5e7eb; vertical-align: middle; }
         td:last-child { text-align: right; }
-        tr:nth-child(even) { background: #fffbeb; }
+        tr:nth-child(even) { background: #f9fafb; }
         .col-seat { width: 30%; }
         .col-type { width: 20%; }
         .col-guest { width: 25%; }
@@ -420,11 +420,11 @@ function exportTablesToPDF(tables: TableItem[], eventName: string, totalTables: 
         .guest-name { color: #2563eb; font-weight: 600; }
         .type { color: #6b7280; font-size: 9px; }
         .phone { color: #6b7280; font-size: 9px; }
-        .tickets { color: #d97706; font-weight: 700; }
-        .footer-row { background: #fef3c7 !important; border-top: 2px solid #f59e0b; }
+        .tickets { color: #1e293b; font-weight: 700; }
+        .footer-row { background: #f1f5f9 !important; border-top: 2px solid #C8102E; }
         .footer-row td { padding: 10px 6px; font-weight: 700; }
-        .footer-row .label { color: #92400e; font-size: 10px; }
-        .footer-row .tickets { color: #92400e; font-size: 11px; }
+        .footer-row .label { color: #1e293b; font-size: 10px; }
+        .footer-row .tickets { color: #1e293b; font-size: 11px; }
         .page-footer { margin-top: 15px; padding-top: 8px; border-top: 1px solid #e5e7eb; text-align: center; font-size: 8px; color: #9ca3af; }
         @media print { body { -webkit-print-color-adjust: exact; print-color-adjust: exact; } .no-break { page-break-inside: avoid; } }
       </style>
@@ -648,9 +648,9 @@ export default function CategoriesScreen() {
           </CardContent>
         </Card>
 
-        <Card className="border-l-4 border-l-orange-500">
+        <Card className="border-l-4 border-l-slate-500">
           <CardContent className="p-3 text-center">
-            <ExternalLink className="w-5 h-5 mx-auto mb-1 text-orange-500" />
+            <ExternalLink className="w-5 h-5 mx-auto mb-1 text-slate-500" />
             <p className="text-lg font-bold">{allocationSummary.externalChannel}</p>
             <p className="text-[10px] text-muted-foreground">Eksterno</p>
           </CardContent>
@@ -667,10 +667,10 @@ export default function CategoriesScreen() {
 
       {/* ALOKACIJE PO KANALIMA */}
       {allocationSummary.externalChannel > 0 && (
-        <Card className="border-l-4 border-l-orange-500">
+        <Card className="border-l-4 border-l-slate-500">
           <CardHeader className="pb-2">
             <CardTitle className="text-sm flex items-center gap-2">
-              <ExternalLink className="w-4 h-4 text-orange-600" />
+              <ExternalLink className="w-4 h-4 text-slate-500" />
               Eksterni Kanali ({allocationSummary.externalChannel} karata)
               <span className="text-xs text-muted-foreground font-normal ml-2">alocirano drugim prodavnicama</span>
             </CardTitle>
@@ -680,10 +680,10 @@ export default function CategoriesScreen() {
               {Object.entries(allocationSummary.byChannel).map(([channel, count], idx) => (
                 <div
                   key={idx}
-                  className="flex items-center gap-2 px-3 py-1.5 rounded-full bg-orange-50 border border-orange-200"
+                  className="flex items-center gap-2 px-3 py-1.5 rounded-full bg-slate-100 border border-slate-200 dark:bg-slate-800 dark:border-slate-700"
                 >
-                  <span className="text-xs text-orange-700 font-medium">{channel}</span>
-                  <span className="text-xs font-bold text-orange-600 bg-orange-100 px-2 py-0.5 rounded-full">
+                  <span className="text-xs text-slate-700 dark:text-slate-300 font-medium">{channel}</span>
+                  <span className="text-xs font-bold text-slate-600 dark:text-slate-400 bg-slate-200 dark:bg-slate-700 px-2 py-0.5 rounded-full">
                     {count}
                   </span>
                 </div>
@@ -708,7 +708,7 @@ export default function CategoriesScreen() {
               {gratisByCategory.map((g, idx) => (
                 <div
                   key={idx}
-                  className="flex items-center gap-2 px-3 py-1.5 rounded-full bg-purple-50 border border-purple-200"
+                  className="flex items-center gap-2 px-3 py-1.5 rounded-full bg-purple-50 dark:bg-purple-500/10 border border-purple-200 dark:border-purple-500/30"
                 >
                   <span className="text-xs text-purple-700 font-medium">{g.category}</span>
                   <span className="text-xs font-bold text-purple-600 bg-purple-100 px-2 py-0.5 rounded-full">
@@ -721,6 +721,197 @@ export default function CategoriesScreen() {
           </CardContent>
         </Card>
       )}
+
+      {/* Categories Table SA DINAMIČKIM KOLONAMA IZ BAZE */}
+      <Card className="md:shadow-md">
+        <CardHeader className="pb-2">
+          <CardTitle className="text-sm flex items-center gap-2">
+            <Layers className="w-4 h-4" />
+            Statistika po Tribinama
+          </CardTitle>
+        </CardHeader>
+        <CardContent className="p-0">
+          <div className="overflow-x-auto">
+            <table className="w-full text-xs">
+              <thead>
+                <tr className="border-b bg-gray-100 dark:bg-gray-800">
+                  <th className="sticky left-0 z-10 bg-gray-100 dark:bg-gray-800 px-2 py-2 text-left font-semibold min-w-[120px] border-r shadow-[2px_0_4px_-2px_rgba(0,0,0,0.15)]">
+                    Tribina
+                  </th>
+                  <th className="px-2 py-2 text-right font-semibold bg-success/10">Prodato</th>
+                  <th className="px-2 py-2 text-right font-semibold bg-purple-50 dark:bg-purple-500/10">Gratis</th>
+
+                  {/* DINAMIČKE KOLONE ZA EKSTERNE KANALE IZ BAZE */}
+                  {Object.keys(allocationSummary.byChannel)
+                    .sort()
+                    .map((channel) => (
+                      <th key={channel} className="px-2 py-2 text-right font-semibold bg-slate-100">
+                        {channel}
+                      </th>
+                    ))}
+
+                  {/* REZERVISANO ako postoji u bazi */}
+                  {allocationSummary.reserved > 0 && (
+                    <th className="px-2 py-2 text-right font-semibold bg-blue-50 dark:bg-blue-500/10">Rezerv.</th>
+                  )}
+
+                  <th className="px-2 py-2 text-right font-semibold">Kap.</th>
+                  <th className="px-2 py-2 text-right font-semibold bg-green-50 dark:bg-green-500/10">Slobodno</th>
+                  <th className="px-2 py-2 text-right font-semibold bg-channel-online-bg/30">Onl.</th>
+                  <th className="px-2 py-2 text-right font-semibold bg-channel-biletarnica-bg/30">Bil.</th>
+                  <th className="px-2 py-2 text-right font-semibold bg-channel-virman-bg/30">Vir.</th>
+                  <th className="px-2 py-2 text-right font-semibold bg-channel-kartica-bg/30">Kar.</th>
+                  <th className="px-2 py-2 text-right font-semibold bg-success/10">Iznos</th>
+                </tr>
+              </thead>
+              <tbody>
+                {groupedStats.map((g, idx) => {
+                  const gColor = getCategoryColor(g.group, idx);
+                  // Saberi gratis iz svih potkategorija ove grupe
+                  const gratisInGroup = gratisByCategory
+                    .filter((gr) => g.subcategories.includes(gr.category))
+                    .reduce((sum, gr) => sum + gr.count, 0);
+                  // Saberi alokacije iz svih potkategorija
+                  const groupAllocTotal = g.subcategories.reduce((sum, sub) => {
+                    return sum + calculateCategoryAllocations(allocations, sub).total;
+                  }, 0);
+                  const groupAllocReserved = g.subcategories.reduce((sum, sub) => {
+                    return sum + calculateCategoryAllocations(allocations, sub).reserved;
+                  }, 0);
+                  const groupAllocByChannel: Record<string, number> = {};
+                  g.subcategories.forEach((sub) => {
+                    const subAlloc = calculateCategoryAllocations(allocations, sub);
+                    Object.entries(subAlloc.byChannel).forEach(([ch, cnt]) => {
+                      groupAllocByChannel[ch] = (groupAllocByChannel[ch] || 0) + cnt;
+                    });
+                  });
+                  const realAvailable = Math.max(0, g.capacity - g.count - groupAllocTotal);
+
+                  return (
+                    <tr
+                      key={g.group}
+                      className={`${idx % 2 === 0 ? "bg-card" : "bg-muted/20"} cursor-pointer hover:bg-muted/40 transition-colors`}
+                      onClick={() => setSelectedCategory(g.group)}
+                    >
+                      <td
+                        className={`sticky left-0 z-10 px-2 py-2 border-r shadow-[2px_0_4px_-2px_rgba(0,0,0,0.15)] whitespace-nowrap ${
+                          idx % 2 === 0 ? "bg-white dark:bg-gray-900" : "bg-gray-50 dark:bg-gray-800"
+                        }`}
+                      >
+                        <span
+                          className="px-2 py-0.5 rounded text-[10px] font-semibold border whitespace-nowrap"
+                          style={{
+                            borderColor: gColor,
+                            color: gColor,
+                            backgroundColor: "transparent",
+                          }}
+                        >
+                          {g.group}
+                        </span>
+                        {g.subcategories.length > 1 && (
+                          <span className="ml-1 text-[9px] text-muted-foreground">({g.subcategories.length})</span>
+                        )}
+                      </td>
+
+                      <td className="px-2 py-2 text-right font-semibold text-success bg-success/5">
+                        {g.count - gratisInGroup}
+                      </td>
+
+                      <td className="px-2 py-2 text-right font-medium text-purple-600 dark:text-purple-400 bg-purple-50 dark:bg-purple-500/10">
+                        {gratisInGroup || 0}
+                      </td>
+
+                      {Object.keys(allocationSummary.byChannel)
+                        .sort()
+                        .map((channel) => (
+                          <td key={channel} className="px-2 py-2 text-right font-medium text-slate-600 dark:text-slate-400 bg-slate-50 dark:bg-slate-700/30">
+                            {groupAllocByChannel[channel] || "-"}
+                          </td>
+                        ))}
+
+                      {allocationSummary.reserved > 0 && (
+                        <td className="px-2 py-2 text-right font-medium text-blue-600 dark:text-blue-400 bg-blue-50 dark:bg-blue-500/10">
+                          {groupAllocReserved || "-"}
+                        </td>
+                      )}
+
+                      <td className="px-2 py-2 text-right text-muted-foreground">{g.capacity || "-"}</td>
+
+                      <td className="px-2 py-2 text-right font-semibold text-green-600 dark:text-green-400 bg-green-50 dark:bg-green-500/10">{realAvailable}</td>
+
+                      <td className="px-2 py-2 text-right bg-channel-online-bg/20 text-channel-online font-medium">
+                        {g.online || "-"}
+                      </td>
+                      <td className="px-2 py-2 text-right bg-channel-biletarnica-bg/20 text-channel-biletarnica font-medium">
+                        {g.biletarnica || "-"}
+                      </td>
+                      <td className="px-2 py-2 text-right bg-channel-virman-bg/20 text-channel-virman font-medium">
+                        {g.virman || "-"}
+                      </td>
+                      <td className="px-2 py-2 text-right bg-channel-kartica-bg/20 text-channel-kartica font-medium">
+                        {g.kartica || "-"}
+                      </td>
+                      <td className="px-2 py-2 text-right bg-success/5 font-semibold text-success">
+                        {formatCurrencyNoDecimals(g.amount, currency, exchangeRate, false)}
+                      </td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+              <tfoot>
+                <tr className="border-t-2 bg-muted font-bold">
+                  <td className="sticky left-0 z-10 bg-gray-200 dark:bg-gray-700 px-2 py-2 border-r shadow-[2px_0_4px_-2px_rgba(0,0,0,0.15)]">
+                    UKUPNO
+                  </td>
+
+                  <td className="px-2 py-2 text-right text-success bg-success/10">{totalPaid}</td>
+
+                  <td className="px-2 py-2 text-right text-purple-600 dark:text-purple-400 bg-purple-50 dark:bg-purple-500/10">{totalGratis}</td>
+
+                  {/* UKUPNO PO KANALIMA */}
+                  {Object.entries(allocationSummary.byChannel)
+                    .sort((a, b) => a[0].localeCompare(b[0]))
+                    .map(([channel, total]) => (
+                      <td key={channel} className="px-2 py-2 text-right text-slate-600 bg-slate-50">
+                        {total}
+                      </td>
+                    ))}
+
+                  {/* UKUPNO REZERVISANO */}
+                  {allocationSummary.reserved > 0 && (
+                    <td className="px-2 py-2 text-right text-blue-600 dark:text-blue-400 bg-blue-50 dark:bg-blue-500/10">{allocationSummary.reserved}</td>
+                  )}
+
+                  <td className="px-2 py-2 text-right">{totalCapacity}</td>
+
+                  <td className="px-2 py-2 text-right text-green-600 dark:text-green-400 bg-green-50 dark:bg-green-500/10">{realRemaining}</td>
+
+                  <td className="px-2 py-2 text-right bg-channel-online-bg/30">
+                    {groupedStats.reduce((sum, c) => sum + c.online, 0)}
+                  </td>
+                  <td className="px-2 py-2 text-right bg-channel-biletarnica-bg/30">
+                    {groupedStats.reduce((sum, c) => sum + c.biletarnica, 0)}
+                  </td>
+                  <td className="px-2 py-2 text-right bg-channel-virman-bg/30">
+                    {groupedStats.reduce((sum, c) => sum + c.virman, 0)}
+                  </td>
+                  <td className="px-2 py-2 text-right bg-channel-kartica-bg/30">
+                    {groupedStats.reduce((sum, c) => sum + c.kartica, 0)}
+                  </td>
+                  <td className="px-2 py-2 text-right bg-success/10 text-success">
+                    {formatCurrencyNoDecimals(
+                      groupedStats.reduce((sum, c) => sum + c.amount, 0),
+                      currency,
+                      exchangeRate,
+                      false,
+                    )}
+                  </td>
+                </tr>
+              </tfoot>
+            </table>
+          </div>
+        </CardContent>
+      </Card>
 
       {/* Main content grid - Chart and Categories side by side on desktop */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-3 md:gap-4">
@@ -814,204 +1005,13 @@ export default function CategoriesScreen() {
         </Card>
       </div>
 
-      {/* Categories Table SA DINAMIČKIM KOLONAMA IZ BAZE */}
-      <Card className="md:shadow-md">
-        <CardHeader className="pb-2">
-          <CardTitle className="text-sm flex items-center gap-2">
-            <Layers className="w-4 h-4" />
-            Statistika po Tribinama
-          </CardTitle>
-        </CardHeader>
-        <CardContent className="p-0">
-          <div className="overflow-x-auto">
-            <table className="w-full text-xs">
-              <thead>
-                <tr className="border-b bg-gray-100 dark:bg-gray-800">
-                  <th className="sticky left-0 z-10 bg-gray-100 dark:bg-gray-800 px-2 py-2 text-left font-semibold min-w-[120px] border-r shadow-[2px_0_4px_-2px_rgba(0,0,0,0.15)]">
-                    Tribina
-                  </th>
-                  <th className="px-2 py-2 text-right font-semibold bg-success/10">Prodato</th>
-                  <th className="px-2 py-2 text-right font-semibold bg-purple-50">Gratis</th>
-
-                  {/* DINAMIČKE KOLONE ZA EKSTERNE KANALE IZ BAZE */}
-                  {Object.keys(allocationSummary.byChannel)
-                    .sort()
-                    .map((channel) => (
-                      <th key={channel} className="px-2 py-2 text-right font-semibold bg-orange-50">
-                        {channel}
-                      </th>
-                    ))}
-
-                  {/* REZERVISANO ako postoji u bazi */}
-                  {allocationSummary.reserved > 0 && (
-                    <th className="px-2 py-2 text-right font-semibold bg-blue-50">Rezerv.</th>
-                  )}
-
-                  <th className="px-2 py-2 text-right font-semibold">Kap.</th>
-                  <th className="px-2 py-2 text-right font-semibold bg-green-50">Slobodno</th>
-                  <th className="px-2 py-2 text-right font-semibold bg-channel-online-bg/30">Onl.</th>
-                  <th className="px-2 py-2 text-right font-semibold bg-channel-biletarnica-bg/30">Bil.</th>
-                  <th className="px-2 py-2 text-right font-semibold bg-channel-virman-bg/30">Vir.</th>
-                  <th className="px-2 py-2 text-right font-semibold bg-channel-kartica-bg/30">Kar.</th>
-                  <th className="px-2 py-2 text-right font-semibold bg-success/10">Iznos</th>
-                </tr>
-              </thead>
-              <tbody>
-                {groupedStats.map((g, idx) => {
-                  const gColor = getCategoryColor(g.group, idx);
-                  // Saberi gratis iz svih potkategorija ove grupe
-                  const gratisInGroup = gratisByCategory
-                    .filter((gr) => g.subcategories.includes(gr.category))
-                    .reduce((sum, gr) => sum + gr.count, 0);
-                  // Saberi alokacije iz svih potkategorija
-                  const groupAllocTotal = g.subcategories.reduce((sum, sub) => {
-                    return sum + calculateCategoryAllocations(allocations, sub).total;
-                  }, 0);
-                  const groupAllocReserved = g.subcategories.reduce((sum, sub) => {
-                    return sum + calculateCategoryAllocations(allocations, sub).reserved;
-                  }, 0);
-                  const groupAllocByChannel: Record<string, number> = {};
-                  g.subcategories.forEach((sub) => {
-                    const subAlloc = calculateCategoryAllocations(allocations, sub);
-                    Object.entries(subAlloc.byChannel).forEach(([ch, cnt]) => {
-                      groupAllocByChannel[ch] = (groupAllocByChannel[ch] || 0) + cnt;
-                    });
-                  });
-                  const realAvailable = Math.max(0, g.capacity - g.count - groupAllocTotal);
-
-                  return (
-                    <tr
-                      key={g.group}
-                      className={`${idx % 2 === 0 ? "bg-card" : "bg-muted/20"} cursor-pointer hover:bg-muted/40 transition-colors`}
-                      onClick={() => setSelectedCategory(g.group)}
-                    >
-                      <td
-                        className={`sticky left-0 z-10 px-2 py-2 border-r shadow-[2px_0_4px_-2px_rgba(0,0,0,0.15)] whitespace-nowrap ${
-                          idx % 2 === 0 ? "bg-white dark:bg-gray-900" : "bg-gray-50 dark:bg-gray-850"
-                        }`}
-                      >
-                        <span
-                          className="px-2 py-0.5 rounded text-[10px] font-semibold border whitespace-nowrap"
-                          style={{
-                            borderColor: gColor,
-                            color: gColor,
-                            backgroundColor: "transparent",
-                          }}
-                        >
-                          {g.group}
-                        </span>
-                        {g.subcategories.length > 1 && (
-                          <span className="ml-1 text-[9px] text-muted-foreground">({g.subcategories.length})</span>
-                        )}
-                      </td>
-
-                      <td className="px-2 py-2 text-right font-semibold text-success bg-success/5">
-                        {g.count - gratisInGroup}
-                      </td>
-
-                      <td className="px-2 py-2 text-right font-medium text-purple-600 bg-purple-50">
-                        {gratisInGroup || 0}
-                      </td>
-
-                      {Object.keys(allocationSummary.byChannel)
-                        .sort()
-                        .map((channel) => (
-                          <td key={channel} className="px-2 py-2 text-right font-medium text-orange-600 bg-orange-50">
-                            {groupAllocByChannel[channel] || "-"}
-                          </td>
-                        ))}
-
-                      {allocationSummary.reserved > 0 && (
-                        <td className="px-2 py-2 text-right font-medium text-blue-600 bg-blue-50">
-                          {groupAllocReserved || "-"}
-                        </td>
-                      )}
-
-                      <td className="px-2 py-2 text-right text-muted-foreground">{g.capacity || "-"}</td>
-
-                      <td className="px-2 py-2 text-right font-semibold text-green-600 bg-green-50">{realAvailable}</td>
-
-                      <td className="px-2 py-2 text-right bg-channel-online-bg/20 text-channel-online font-medium">
-                        {g.online || "-"}
-                      </td>
-                      <td className="px-2 py-2 text-right bg-channel-biletarnica-bg/20 text-channel-biletarnica font-medium">
-                        {g.biletarnica || "-"}
-                      </td>
-                      <td className="px-2 py-2 text-right bg-channel-virman-bg/20 text-channel-virman font-medium">
-                        {g.virman || "-"}
-                      </td>
-                      <td className="px-2 py-2 text-right bg-channel-kartica-bg/20 text-channel-kartica font-medium">
-                        {g.kartica || "-"}
-                      </td>
-                      <td className="px-2 py-2 text-right bg-success/5 font-semibold text-success">
-                        {formatCurrencyNoDecimals(g.amount, currency, exchangeRate, false)}
-                      </td>
-                    </tr>
-                  );
-                })}
-              </tbody>
-              <tfoot>
-                <tr className="border-t-2 bg-muted font-bold">
-                  <td className="sticky left-0 z-10 bg-gray-200 dark:bg-gray-700 px-2 py-2 border-r shadow-[2px_0_4px_-2px_rgba(0,0,0,0.15)]">
-                    UKUPNO
-                  </td>
-
-                  <td className="px-2 py-2 text-right text-success bg-success/10">{totalPaid}</td>
-
-                  <td className="px-2 py-2 text-right text-purple-600 bg-purple-50">{totalGratis}</td>
-
-                  {/* UKUPNO PO KANALIMA */}
-                  {Object.entries(allocationSummary.byChannel)
-                    .sort((a, b) => a[0].localeCompare(b[0]))
-                    .map(([channel, total]) => (
-                      <td key={channel} className="px-2 py-2 text-right text-orange-600 bg-orange-50">
-                        {total}
-                      </td>
-                    ))}
-
-                  {/* UKUPNO REZERVISANO */}
-                  {allocationSummary.reserved > 0 && (
-                    <td className="px-2 py-2 text-right text-blue-600 bg-blue-50">{allocationSummary.reserved}</td>
-                  )}
-
-                  <td className="px-2 py-2 text-right">{totalCapacity}</td>
-
-                  <td className="px-2 py-2 text-right text-green-600 bg-green-50">{realRemaining}</td>
-
-                  <td className="px-2 py-2 text-right bg-channel-online-bg/30">
-                    {groupedStats.reduce((sum, c) => sum + c.online, 0)}
-                  </td>
-                  <td className="px-2 py-2 text-right bg-channel-biletarnica-bg/30">
-                    {groupedStats.reduce((sum, c) => sum + c.biletarnica, 0)}
-                  </td>
-                  <td className="px-2 py-2 text-right bg-channel-virman-bg/30">
-                    {groupedStats.reduce((sum, c) => sum + c.virman, 0)}
-                  </td>
-                  <td className="px-2 py-2 text-right bg-channel-kartica-bg/30">
-                    {groupedStats.reduce((sum, c) => sum + c.kartica, 0)}
-                  </td>
-                  <td className="px-2 py-2 text-right bg-success/10 text-success">
-                    {formatCurrencyNoDecimals(
-                      groupedStats.reduce((sum, c) => sum + c.amount, 0),
-                      currency,
-                      exchangeRate,
-                      false,
-                    )}
-                  </td>
-                </tr>
-              </tfoot>
-            </table>
-          </div>
-        </CardContent>
-      </Card>
-
       {/* STOLOVI SEKCIJA - ORIGINALNA LOGIKA */}
       {tableStats && tableStats.summary.totalTables > 0 && (
         <Card>
           <CardHeader className="pb-2">
             <CardTitle className="text-sm flex items-center justify-between">
               <div className="flex items-center gap-2">
-                <UtensilsCrossed className="w-4 h-4 text-amber-600" />
+                <UtensilsCrossed className="w-4 h-4 text-slate-500" />
                 Stolovi
               </div>
               {showAllTables && (
@@ -1024,17 +1024,17 @@ export default function CategoriesScreen() {
           </CardHeader>
           <CardContent className="space-y-4">
             <div className="grid grid-cols-3 gap-3">
-              <div className="rounded-lg p-4 bg-amber-50 border border-amber-200 text-center">
-                <UtensilsCrossed className="h-6 w-6 text-amber-600 mx-auto mb-1" />
-                <p className="text-2xl font-bold text-amber-700">{tableStats.summary.totalTables}</p>
-                <p className="text-xs text-amber-600">Ukupno stolova</p>
+              <div className="rounded-lg p-4 bg-slate-50 border border-slate-200 text-center dark:bg-slate-800/50 dark:border-slate-700">
+                <UtensilsCrossed className="h-6 w-6 text-slate-600 mx-auto mb-1" />
+                <p className="text-2xl font-bold text-slate-700 dark:text-slate-200">{tableStats.summary.totalTables}</p>
+                <p className="text-xs text-slate-500">Ukupno stolova</p>
               </div>
-              <div className="rounded-lg p-4 bg-blue-50 border border-blue-200 text-center">
+              <div className="rounded-lg p-4 bg-blue-50 dark:bg-blue-500/10 border border-blue-200 dark:border-blue-500/30 text-center">
                 <Users className="h-6 w-6 text-blue-600 mx-auto mb-1" />
                 <p className="text-2xl font-bold text-blue-700">{tableStats.summary.totalTickets}</p>
                 <p className="text-xs text-blue-600">Ukupno karata</p>
               </div>
-              <div className="rounded-lg p-4 bg-green-50 border border-green-200 text-center">
+              <div className="rounded-lg p-4 bg-green-50 dark:bg-green-500/10 border border-green-200 dark:border-green-500/30 text-center">
                 <Target className="h-6 w-6 text-green-600 mx-auto mb-1" />
                 <p className="text-2xl font-bold text-green-700">
                   {tableStats.summary.totalTables > 0
@@ -1050,13 +1050,13 @@ export default function CategoriesScreen() {
                 <p className="text-xs font-semibold text-muted-foreground uppercase">Po tipu</p>
                 <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2">
                   {tableStats.typeStats.map((stat, idx) => (
-                    <div key={idx} className="flex items-center justify-between p-3 rounded-lg bg-gray-50 border">
+                    <div key={idx} className="flex items-center justify-between p-3 rounded-lg bg-gray-50 dark:bg-white/5 border dark:border-border">
                       <div>
                         <p className="font-medium text-gray-800 text-sm">{stat.type}</p>
                         <p className="text-xs text-gray-500">{stat.ticketCount} karata</p>
                       </div>
                       <div className="text-right">
-                        <p className="text-xl font-bold text-amber-600">{stat.tableCount}</p>
+                        <p className="text-xl font-bold text-slate-700 dark:text-slate-200">{stat.tableCount}</p>
                         <p className="text-xs text-gray-500">stolova</p>
                       </div>
                     </div>
@@ -1179,17 +1179,17 @@ export default function CategoriesScreen() {
                         <p className="text-xl font-bold text-success">{g.count - gratisInGroup}</p>
                         <p className="text-[10px] text-muted-foreground">Prodato</p>
                       </div>
-                      <div className="bg-purple-50 rounded-lg p-3 text-center">
+                      <div className="bg-purple-50 dark:bg-purple-500/10 rounded-lg p-3 text-center">
                         <Gift className="w-5 h-5 mx-auto mb-1 text-purple-600" />
                         <p className="text-xl font-bold text-purple-600">{gratisInGroup}</p>
                         <p className="text-[10px] text-muted-foreground">Gratis</p>
                       </div>
-                      <div className="bg-orange-50 rounded-lg p-3 text-center">
-                        <ExternalLink className="w-5 h-5 mx-auto mb-1 text-orange-600" />
-                        <p className="text-xl font-bold text-orange-600">{groupAllocTotal}</p>
+                      <div className="bg-slate-100 rounded-lg p-3 text-center dark:bg-slate-800/50">
+                        <ExternalLink className="w-5 h-5 mx-auto mb-1 text-slate-500" />
+                        <p className="text-xl font-bold text-slate-600 dark:text-slate-400">{groupAllocTotal}</p>
                         <p className="text-[10px] text-muted-foreground">Alocir.</p>
                       </div>
-                      <div className="bg-green-50 rounded-lg p-3 text-center">
+                      <div className="bg-green-50 dark:bg-green-500/10 rounded-lg p-3 text-center">
                         <Target className="w-5 h-5 mx-auto mb-1 text-green-600" />
                         <p className="text-xl font-bold text-green-600">{remaining}</p>
                         <p className="text-[10px] text-muted-foreground">Slobodno</p>

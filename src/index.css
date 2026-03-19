@@ -113,9 +113,9 @@
     --payout-border: 160 60% 85%;
 
     /* Gradients */
-    --gradient-primary: linear-gradient(135deg, hsl(38 92% 50%) 0%, hsl(24 95% 53%) 100%);
+    --gradient-primary: linear-gradient(135deg, hsl(0 85% 42%) 0%, hsl(0 80% 28%) 100%);
     --gradient-success: linear-gradient(135deg, hsl(160 84% 39%) 0%, hsl(142 76% 36%) 100%);
-    --gradient-header: linear-gradient(135deg, hsl(38 92% 50%) 0%, hsl(24 95% 53%) 100%);
+    --gradient-header: linear-gradient(135deg, hsl(0 85% 42%) 0%, hsl(0 80% 28%) 100%);
   }
 
   .dark {
@@ -128,7 +128,7 @@
     --popover: 222 47% 8%;
     --popover-foreground: 210 40% 98%;
 
-    --primary: 38 92% 50%;
+    --primary: 0 85% 42%;
     --primary-foreground: 0 0% 100%;
 
     --secondary: 217 33% 17%;
@@ -145,7 +145,7 @@
 
     --border: 217 33% 20%;
     --input: 217 33% 17%;
-    --ring: 38 92% 50%;
+    --ring: 0 70% 45%;
 
     /* Dark mode channel backgrounds */
     --channel-online-bg: 217 91% 15%;
@@ -193,7 +193,7 @@
   }
 
   .bg-gradient-header {
-    @apply bg-gradient-to-br from-amber-500 to-orange-600;
+    @apply bg-gradient-to-br from-red-700 to-red-900;
   }
 
   .bg-gradient-profit {
@@ -275,7 +275,7 @@
   }
 
   .card-highlight {
-    @apply bg-slate-800/50 border-2 border-amber-500/40 rounded-2xl;
+    @apply bg-slate-800/50 border-2 border-red-500/30 rounded-2xl;
   }
 }
 
@@ -405,7 +405,7 @@
 
   /* Button styles */
   .btn-primary {
-    @apply bg-gradient-to-br from-amber-500 to-orange-600 text-white rounded-xl font-medium transition-all hover:opacity-90;
+    @apply bg-gradient-to-br from-red-600 to-red-800 text-white rounded-xl font-medium transition-all hover:opacity-90;
   }
 
   .btn-secondary {
@@ -426,7 +426,7 @@
   }
 
   .filter-btn.active {
-    @apply bg-amber-500/20 text-amber-400 border border-amber-500/30;
+    @apply bg-red-500/20 text-red-400 border border-red-500/30;
   }
 
   .filter-btn:not(.active) {
@@ -444,7 +444,7 @@
   }
 
   .icon-box-primary {
-    @apply bg-gradient-to-br from-amber-500 to-orange-600;
+    @apply bg-gradient-to-br from-red-600 to-red-800;
   }
 
   .icon-box-success {
@@ -566,7 +566,7 @@
 
 /* Gradient text */
 .text-gradient-primary {
-  @apply bg-gradient-to-r from-amber-400 to-orange-500 bg-clip-text text-transparent;
+  @apply bg-gradient-to-r from-red-400 to-red-600 bg-clip-text text-transparent;
 }
 
 .text-gradient-success {

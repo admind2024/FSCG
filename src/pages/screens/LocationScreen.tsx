@@ -9,7 +9,7 @@ const CHART_COLORS = [
   '#6366f1', // indigo
   '#ec4899', // pink
   '#14b8a6', // teal
-  '#f59e0b', // amber
+  '#64748b', // slate
   '#8b5cf6', // violet
   '#06b6d4', // cyan
   '#f43f5e', // rose
@@ -62,13 +62,13 @@ export default function LocationScreen() {
 
         {/* Top City Highlight - spans 2 columns on desktop */}
         {top10Cities[0] && (
-          <Card className="mt-4 lg:mt-0 lg:col-span-2 bg-gradient-to-r from-amber-500/10 via-orange-500/10 to-red-500/10 border-amber-500/20 overflow-hidden">
+          <Card className="mt-4 lg:mt-0 lg:col-span-2 bg-gradient-to-r from-red-500/10 via-red-600/5 to-slate-800/30 border-red-500/20 overflow-hidden">
             <CardContent className="p-4 relative">
               <div className="absolute top-2 right-2">
-                <Award className="w-8 h-8 text-amber-500/30" />
+                <Award className="w-8 h-8 text-red-500/30" />
               </div>
               <div className="flex items-center gap-2 mb-2">
-                <div className="w-8 h-8 rounded-full bg-gradient-to-br from-amber-400 to-orange-500 flex items-center justify-center">
+                <div className="w-8 h-8 rounded-full bg-gradient-to-br from-red-600 to-red-800 flex items-center justify-center">
                   <span className="text-white font-bold text-sm">1</span>
                 </div>
                 <div>
@@ -79,7 +79,7 @@ export default function LocationScreen() {
               <div className="flex gap-4 mt-3 lg:gap-8">
                 <div>
                   <p className="text-xs text-muted-foreground">Karata</p>
-                  <p className="font-semibold text-amber-600 dark:text-amber-400 lg:text-xl">{top10Cities[0].count}</p>
+                  <p className="font-semibold text-red-500 dark:text-red-400 lg:text-xl">{top10Cities[0].count}</p>
                 </div>
                 <div>
                   <p className="text-xs text-muted-foreground">Iznos</p>

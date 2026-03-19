@@ -155,9 +155,6 @@ export default function HomeScreen() {
 
   const fillPercentage = totalCapacity > 0 ? (totalSold / totalCapacity) * 100 : 0;
 
-  const perTicketFeeAmount = currency === "RSD" ? 35 : 0.3;
-  const perTicketFeeLabel = currency === "RSD" ? "35 RSD" : "0,30€";
-
   const channelTotals = {
     online: { count: 0, amount: 0 },
     biletarnica: { count: 0, amount: 0 },
@@ -199,7 +196,6 @@ export default function HomeScreen() {
 
   const onlineServiceFee = channelTotals.online.amount * (selectedEvent.serviceFeePercentage / 100);
   const onlinePdvOnFee = onlineServiceFee * (pdvPercentFee / 100);
-  const onlinePerTicketTotal = channelTotals.online.count * perTicketFeeAmount;
   const onlineBreakdown: ChannelBreakdown = {
     count: channelTotals.online.count,
     amount: channelTotals.online.amount,
@@ -208,8 +204,6 @@ export default function HomeScreen() {
     serviceFee: onlineServiceFee,
     pdvOnFee: onlinePdvOnFee,
     totalFee: onlineServiceFee + onlinePdvOnFee,
-    perTicketFee: perTicketFeeAmount,
-    perTicketFeeTotal: onlinePerTicketTotal,
   };
 
   const biletarnicaServiceFee = channelTotals.biletarnica.amount * (selectedEvent.biletarnicaFee / 100);
@@ -248,10 +242,8 @@ export default function HomeScreen() {
     totalFee: karticaServiceFee + karticaPdvOnFee,
   };
 
-  const totalServiceFees =
+  const eTicketsFee =
     onlineBreakdown.totalFee + biletarnicaBreakdown.totalFee + virmanBreakdown.totalFee + karticaBreakdown.totalFee;
-  const totalPerTicketFees = onlinePerTicketTotal;
-  const eTicketsFee = totalServiceFees + totalPerTicketFees;
   const forPayout = totalRevenue - eTicketsFee;
 
   const totalDeductions = deductions.reduce((sum, d) => sum + d.amount, 0);
@@ -274,83 +266,85 @@ export default function HomeScreen() {
           {/* Row 1: Main Stats - 2x2 on mobile, 4 columns on tablet+ */}
           <div className="grid grid-cols-2 gap-3 md:gap-4">
             {/* Ukupno Prodato */}
-            <Card className="bg-white border border-gray-200 shadow-sm border-l-4 border-l-blue-600">
-              <CardContent className="p-3 md:p-4">
-                <div className="flex items-center gap-2 text-gray-600 mb-1">
-                  <Ticket className="w-4 h-4 text-blue-600" />
-                  <span className="text-xs font-medium">Ukupno Prodato</span>
+            <div className="rounded-2xl p-3 md:p-4 bg-white dark:bg-card border border-gray-100 dark:border-border shadow-sm">
+              <div className="flex items-start justify-between mb-2">
+                <span className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wider">Prodato</span>
+                <div className="w-7 h-7 rounded-xl bg-blue-500 flex items-center justify-center shadow-sm">
+                  <Ticket className="w-3.5 h-3.5 text-white" />
                 </div>
-                <p className="text-2xl md:text-3xl font-bold text-gray-900">{totalSold}</p>
-                <p className="text-xs text-gray-500 font-medium">od {totalCapacity} mesta</p>
-                <div className="mt-2">
-                  <Progress value={fillPercentage} className={`h-2 ${getFillColor(fillPercentage)}`} />
-                  <p className="text-xs mt-1 font-semibold text-gray-700">
-                    {fillPercentage.toFixed(1)}% popunjeno
-                  </p>
-                </div>
-              </CardContent>
-            </Card>
+              </div>
+              <p className="text-3xl md:text-4xl font-black text-foreground leading-none">{totalSold}</p>
+              <p className="text-[11px] text-muted-foreground mt-1">od {totalCapacity} mesta</p>
+              <div className="mt-2.5">
+                <Progress value={fillPercentage} className={`h-1.5 ${getFillColor(fillPercentage)}`} />
+                <p className="text-[11px] mt-1 font-semibold text-muted-foreground">{fillPercentage.toFixed(1)}% popunjeno</p>
+              </div>
+            </div>
 
             {/* Ukupan Prihod */}
-            <Card className="bg-white border border-gray-200 shadow-sm border-l-4 border-l-emerald-500">
-              <CardContent className="p-3 md:p-4">
-                <div className="flex items-center gap-2 text-gray-600 mb-1">
-                  <DollarSign className="w-4 h-4 text-emerald-600" />
-                  <span className="text-xs font-medium">Ukupan Prihod</span>
+            <div className="rounded-2xl p-3 md:p-4 bg-white dark:bg-card border border-gray-100 dark:border-border shadow-sm">
+              <div className="flex items-start justify-between mb-2">
+                <span className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wider">Prihod</span>
+                <div className="w-7 h-7 rounded-xl bg-emerald-500 flex items-center justify-center shadow-sm">
+                  <DollarSign className="w-3.5 h-3.5 text-white" />
                 </div>
-                <p className="text-2xl md:text-3xl font-bold text-gray-900">{formatCurrency(totalRevenue, currency, exchangeRate)}</p>
-                <div className="text-xs text-gray-600 mt-2 space-y-0.5">
-                  <p>Osnovica: <span className="font-semibold">{formatCurrency(baseAmount, currency, exchangeRate, false)}</span></p>
-                  <p>PDV ({pdvPercentRevenue}%): <span className="font-semibold">{formatCurrency(pdvAmount, currency, exchangeRate, false)}</span></p>
-                </div>
-              </CardContent>
-            </Card>
+              </div>
+              <p className="text-2xl md:text-3xl font-black text-foreground leading-none">{formatCurrency(totalRevenue, currency, exchangeRate)}</p>
+              <div className="text-[11px] text-muted-foreground mt-2 space-y-0.5">
+                <p>Osnovica: <span className="font-semibold text-foreground">{formatCurrency(baseAmount, currency, exchangeRate, false)}</span></p>
+                <p>PDV ({pdvPercentRevenue}%): <span className="font-semibold text-foreground">{formatCurrency(pdvAmount, currency, exchangeRate, false)}</span></p>
+              </div>
+            </div>
 
             {/* E-Tickets Fee */}
-            <Card className="bg-white border border-gray-200 shadow-sm border-l-4 border-l-pink-500">
-              <CardContent className="p-3 md:p-4">
-                <div className="flex items-center gap-2 text-gray-600 mb-1">
-                  <TrendingUp className="w-4 h-4 text-pink-600" />
-                  <span className="text-xs font-medium">E-Tickets Fee</span>
+            <div className="rounded-2xl p-3 md:p-4 bg-white dark:bg-card border border-gray-100 dark:border-border shadow-sm">
+              <div className="flex items-start justify-between mb-2">
+                <span className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wider">E-Tickets Fee</span>
+                <div className="w-7 h-7 rounded-xl bg-pink-500 flex items-center justify-center shadow-sm">
+                  <TrendingUp className="w-3.5 h-3.5 text-white" />
                 </div>
-                <p className="text-xl md:text-2xl font-bold text-gray-900">{formatCurrency(eTicketsFee, currency, exchangeRate)}</p>
-              </CardContent>
-            </Card>
+              </div>
+              <p className="text-2xl md:text-3xl font-black text-foreground leading-none">{formatCurrency(eTicketsFee, currency, exchangeRate)}</p>
+              <p className="text-[11px] text-muted-foreground mt-1">naknada e-tickets platforme</p>
+            </div>
 
             {/* Za Isplatu */}
-            <Card className={`bg-white border border-gray-200 shadow-sm border-l-4 border-l-emerald-500 ${hasDeductions ? "ring-1 ring-emerald-300" : ""}`}>
-              <CardContent className="p-3 md:p-4">
-                <div className="flex items-center gap-2 text-gray-700 mb-1">
-                  <Wallet className="w-4 h-4 text-gray-700" />
-                  <span className="text-xs font-semibold">Za Isplatu {hasDeductions ? "(sa odbicima)" : ""}</span>
+            <div className={`rounded-2xl p-3 md:p-4 shadow-md ${hasDeductions ? "ring-2 ring-red-300" : ""}`} style={{background: "linear-gradient(135deg, #C8102E 0%, #9b0c24 100%)"}}>
+              <div className="flex items-start justify-between mb-2">
+                <span className="text-[10px] font-semibold text-red-100 uppercase tracking-wider">
+                  Za Isplatu {hasDeductions ? "(sa odbicima)" : ""}
+                </span>
+                <div className="w-7 h-7 rounded-xl bg-white/20 flex items-center justify-center">
+                  <Wallet className="w-3.5 h-3.5 text-white" />
                 </div>
-                <p className="text-xl md:text-2xl font-bold text-emerald-600">
-                  <AnimatedNumber
-                    value={hasDeductions ? finalPayout : forPayout}
-                    formatter={(v) => formatCurrency(v, currency, exchangeRate)}
-                    duration={600}
-                  />
-                </p>
-              </CardContent>
-            </Card>
+              </div>
+              <p className="text-2xl md:text-3xl font-black text-white leading-none">
+                <AnimatedNumber
+                  value={hasDeductions ? finalPayout : forPayout}
+                  formatter={(v) => formatCurrency(v, currency, exchangeRate)}
+                  duration={600}
+                />
+              </p>
+              <p className="text-[11px] text-red-100 mt-1">finalni iznos za organizatora</p>
+            </div>
           </div>
 
           {/* Gratis Karte - samo ako ima */}
           {gratisCount > 0 && (
-            <Card className="bg-white border border-gray-200 shadow-sm border-l-4 border-l-purple-500">
+            <Card className="bg-white dark:bg-card border border-gray-200 dark:border-border shadow-sm border-l-4 border-l-purple-500">
               <CardContent className="p-3">
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-2">
-                    <div className="w-10 h-10 rounded-full bg-purple-100 flex items-center justify-center">
+                    <div className="w-10 h-10 rounded-full bg-purple-100 dark:bg-purple-500/20 flex items-center justify-center">
                       <Gift className="w-5 h-5 text-purple-600" />
                     </div>
                     <div>
-                      <p className="text-xs text-gray-600 font-medium">Gratis Karte</p>
+                      <p className="text-xs text-gray-600 dark:text-muted-foreground font-medium">Gratis Karte</p>
                       <p className="text-2xl font-bold text-purple-600">{gratisCount}</p>
                     </div>
                   </div>
                   <div className="text-right">
-                    <p className="text-xs text-gray-500">besplatne ulaznice</p>
+                    <p className="text-xs text-gray-500 dark:text-muted-foreground">besplatne ulaznice</p>
                     <p className="text-xs text-gray-400">ne ulaze u prodaju</p>
                   </div>
                 </div>
@@ -361,66 +355,66 @@ export default function HomeScreen() {
 
         {/* Right Column - Channel Summary (1/3 width on desktop) */}
         <div className="mt-3 lg:mt-0">
-          <Card className="bg-white border border-gray-200 shadow-sm h-full">
+          <Card className="bg-white dark:bg-card border border-gray-200 dark:border-border shadow-sm h-full">
             <CardHeader className="pb-2 pt-3 px-4">
-              <CardTitle className="text-sm font-semibold text-gray-700">Prodaja po Kanalima</CardTitle>
+              <CardTitle className="text-sm font-semibold text-gray-700 dark:text-muted-foreground">Prodaja po Kanalima</CardTitle>
             </CardHeader>
             <CardContent className="p-3 pt-0">
               {/* Mobile: 4 columns, Desktop: stacked list */}
               <div className="grid grid-cols-4 lg:grid-cols-1 gap-2 lg:gap-3">
-                <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between p-2 lg:p-3 rounded-lg bg-indigo-50">
+                <div className="flex flex-col items-center lg:flex-row lg:items-center lg:justify-between p-2 lg:p-3 rounded-lg bg-white dark:bg-white/5 border border-gray-100 dark:border-white/10">
                   <div className="flex items-center gap-2">
-                    <div className="w-8 h-8 rounded-full bg-indigo-100 text-indigo-600 flex items-center justify-center">
+                    <div className="w-8 h-8 rounded-full bg-indigo-100 dark:bg-indigo-500/20 text-indigo-600 dark:text-indigo-400 flex items-center justify-center">
                       <Globe className="w-4 h-4" />
                     </div>
-                    <span className="hidden lg:block text-sm font-medium text-gray-700">Online</span>
+                    <span className="hidden lg:block text-sm font-medium text-gray-700 dark:text-muted-foreground">Online</span>
                   </div>
                   <div className="text-center lg:text-right mt-1 lg:mt-0">
-                    <p className="text-[10px] lg:hidden text-gray-600 font-medium">Online</p>
-                    <p className="text-sm lg:text-lg font-bold text-gray-900">{onlineBreakdown.count}</p>
-                    <p className="text-[10px] lg:text-xs text-gray-500">{formatCurrency(onlineBreakdown.amount, currency, exchangeRate, false)}</p>
+                    <p className="text-[10px] lg:hidden text-gray-600 dark:text-muted-foreground font-medium">Online</p>
+                    <p className="text-sm lg:text-lg font-bold text-gray-900 dark:text-foreground">{onlineBreakdown.count}</p>
+                    <p className="text-[10px] lg:text-xs text-gray-500 dark:text-muted-foreground">{formatCurrency(onlineBreakdown.amount, currency, exchangeRate, false)}</p>
                   </div>
                 </div>
 
-                <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between p-2 lg:p-3 rounded-lg bg-pink-50">
+                <div className="flex flex-col items-center lg:flex-row lg:items-center lg:justify-between p-2 lg:p-3 rounded-lg bg-white dark:bg-white/5 border border-gray-100 dark:border-white/10">
                   <div className="flex items-center gap-2">
-                    <div className="w-8 h-8 rounded-full bg-pink-100 text-pink-600 flex items-center justify-center">
+                    <div className="w-8 h-8 rounded-full bg-pink-100 dark:bg-pink-500/20 text-pink-600 dark:text-pink-400 flex items-center justify-center">
                       <MapPin className="w-4 h-4" />
                     </div>
-                    <span className="hidden lg:block text-sm font-medium text-gray-700">Biletarnica</span>
+                    <span className="hidden lg:block text-sm font-medium text-gray-700 dark:text-muted-foreground">Biletarnica</span>
                   </div>
                   <div className="text-center lg:text-right mt-1 lg:mt-0">
-                    <p className="text-[10px] lg:hidden text-gray-600 font-medium">Bilet.</p>
-                    <p className="text-sm lg:text-lg font-bold text-gray-900">{biletarnicaBreakdown.count}</p>
-                    <p className="text-[10px] lg:text-xs text-gray-500">{formatCurrency(biletarnicaBreakdown.amount, currency, exchangeRate, false)}</p>
+                    <p className="text-[10px] lg:hidden text-gray-600 dark:text-muted-foreground font-medium">Bilet.</p>
+                    <p className="text-sm lg:text-lg font-bold text-gray-900 dark:text-foreground">{biletarnicaBreakdown.count}</p>
+                    <p className="text-[10px] lg:text-xs text-gray-500 dark:text-muted-foreground">{formatCurrency(biletarnicaBreakdown.amount, currency, exchangeRate, false)}</p>
                   </div>
                 </div>
 
-                <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between p-2 lg:p-3 rounded-lg bg-sky-50">
+                <div className="flex flex-col items-center lg:flex-row lg:items-center lg:justify-between p-2 lg:p-3 rounded-lg bg-white dark:bg-white/5 border border-gray-100 dark:border-white/10">
                   <div className="flex items-center gap-2">
-                    <div className="w-8 h-8 rounded-full bg-sky-100 text-sky-600 flex items-center justify-center">
+                    <div className="w-8 h-8 rounded-full bg-sky-100 dark:bg-sky-500/20 text-sky-600 dark:text-sky-400 flex items-center justify-center">
                       <Building className="w-4 h-4" />
                     </div>
-                    <span className="hidden lg:block text-sm font-medium text-gray-700">Virman</span>
+                    <span className="hidden lg:block text-sm font-medium text-gray-700 dark:text-muted-foreground">Virman</span>
                   </div>
                   <div className="text-center lg:text-right mt-1 lg:mt-0">
-                    <p className="text-[10px] lg:hidden text-gray-600 font-medium">Virman</p>
-                    <p className="text-sm lg:text-lg font-bold text-gray-900">{virmanBreakdown.count}</p>
-                    <p className="text-[10px] lg:text-xs text-gray-500">{formatCurrency(virmanBreakdown.amount, currency, exchangeRate, false)}</p>
+                    <p className="text-[10px] lg:hidden text-gray-600 dark:text-muted-foreground font-medium">Virman</p>
+                    <p className="text-sm lg:text-lg font-bold text-gray-900 dark:text-foreground">{virmanBreakdown.count}</p>
+                    <p className="text-[10px] lg:text-xs text-gray-500 dark:text-muted-foreground">{formatCurrency(virmanBreakdown.amount, currency, exchangeRate, false)}</p>
                   </div>
                 </div>
 
-                <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between p-2 lg:p-3 rounded-lg bg-amber-50">
+                <div className="flex flex-col items-center lg:flex-row lg:items-center lg:justify-between p-2 lg:p-3 rounded-lg bg-white dark:bg-white/5 border border-gray-100 dark:border-white/10">
                   <div className="flex items-center gap-2">
-                    <div className="w-8 h-8 rounded-full bg-amber-100 text-amber-600 flex items-center justify-center">
+                    <div className="w-8 h-8 rounded-full bg-amber-100 dark:bg-amber-500/20 text-amber-600 dark:text-amber-400 flex items-center justify-center">
                       <CreditCard className="w-4 h-4" />
                     </div>
-                    <span className="hidden lg:block text-sm font-medium text-gray-700">Kartica</span>
+                    <span className="hidden lg:block text-sm font-medium text-gray-700 dark:text-muted-foreground">Kartica</span>
                   </div>
                   <div className="text-center lg:text-right mt-1 lg:mt-0">
-                    <p className="text-[10px] lg:hidden text-gray-600 font-medium">Kartica</p>
-                    <p className="text-sm lg:text-lg font-bold text-gray-900">{karticaBreakdown.count}</p>
-                    <p className="text-[10px] lg:text-xs text-gray-500">{formatCurrency(karticaBreakdown.amount, currency, exchangeRate, false)}</p>
+                    <p className="text-[10px] lg:hidden text-gray-600 dark:text-muted-foreground font-medium">Kartica</p>
+                    <p className="text-sm lg:text-lg font-bold text-gray-900 dark:text-foreground">{karticaBreakdown.count}</p>
+                    <p className="text-[10px] lg:text-xs text-gray-500 dark:text-muted-foreground">{formatCurrency(karticaBreakdown.amount, currency, exchangeRate, false)}</p>
                   </div>
                 </div>
               </div>
@@ -432,39 +426,31 @@ export default function HomeScreen() {
       {/* Row 3: Detailed Channel Breakdown - 2 columns on tablet, 4 on desktop */}
       <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-3 md:gap-4">
         {/* Online */}
-        <Card className="bg-white border border-gray-200 shadow-sm md:shadow-md border-t-4 border-t-indigo-500 md:hover:shadow-lg transition-shadow">
+        <Card className="bg-white dark:bg-card border border-gray-200 dark:border-border shadow-sm md:shadow-md border-t-4 border-t-indigo-500 md:hover:shadow-lg transition-shadow">
           <CardContent className="p-3 md:p-4">
             <div className="flex items-center gap-2 mb-2 md:mb-3">
-              <div className="w-8 h-8 md:w-10 md:h-10 rounded-full bg-indigo-100 flex items-center justify-center">
+              <div className="w-8 h-8 md:w-10 md:h-10 rounded-full bg-indigo-100 dark:bg-indigo-500/20 flex items-center justify-center">
                 <Globe className="w-4 h-4 md:w-5 md:h-5 text-indigo-600" />
               </div>
-              <span className="font-bold text-sm md:text-base text-gray-900">Online prodaja</span>
+              <span className="font-bold text-sm md:text-base text-gray-900 dark:text-foreground">Online prodaja</span>
             </div>
             <div className="space-y-1.5 md:space-y-2 text-xs md:text-sm">
               <div className="flex justify-between">
-                <span className="text-gray-600">Broj karata:</span>
-                <span className="font-bold text-gray-900">{onlineBreakdown.count}</span>
+                <span className="text-gray-600 dark:text-muted-foreground">Broj karata:</span>
+                <span className="font-bold text-gray-900 dark:text-foreground">{onlineBreakdown.count}</span>
               </div>
               <div className="flex justify-between">
-                <span className="text-gray-600">Ukupna prodaja:</span>
-                <span className="font-bold text-gray-900">
+                <span className="text-gray-600 dark:text-muted-foreground">Ukupna prodaja:</span>
+                <span className="font-bold text-gray-900 dark:text-foreground">
                   {formatCurrency(onlineBreakdown.amount, currency, exchangeRate, false)}
                 </span>
               </div>
               <div className="flex justify-between">
-                <span className="text-gray-600">
+                <span className="text-gray-600 dark:text-muted-foreground">
                   Naknada ({onlineBreakdown.feePercent}% + {pdvPercentFee}% PDV):
                 </span>
-                <span className="font-bold text-gray-900">
+                <span className="font-bold text-gray-900 dark:text-foreground">
                   {formatCurrency(onlineBreakdown.totalFee, currency, exchangeRate, false)}
-                </span>
-              </div>
-              <div className="flex justify-between border-t border-gray-200 pt-1.5 md:pt-2 mt-1.5 md:mt-2">
-                <span className="text-gray-600">
-                  Naknada po karti ({onlineBreakdown.count} x {perTicketFeeLabel}):
-                </span>
-                <span className="font-bold text-gray-900">
-                  {formatCurrency(onlineBreakdown.perTicketFeeTotal || 0, currency, exchangeRate, false)}
                 </span>
               </div>
             </div>
@@ -472,30 +458,30 @@ export default function HomeScreen() {
         </Card>
 
         {/* Biletarnica */}
-        <Card className="bg-white border border-gray-200 shadow-sm md:shadow-md border-t-4 border-t-pink-500 md:hover:shadow-lg transition-shadow">
+        <Card className="bg-white dark:bg-card border border-gray-200 dark:border-border shadow-sm md:shadow-md border-t-4 border-t-pink-500 md:hover:shadow-lg transition-shadow">
           <CardContent className="p-3 md:p-4">
             <div className="flex items-center gap-2 mb-2 md:mb-3">
-              <div className="w-8 h-8 md:w-10 md:h-10 rounded-full bg-pink-100 flex items-center justify-center">
+              <div className="w-8 h-8 md:w-10 md:h-10 rounded-full bg-pink-100 dark:bg-pink-500/20 flex items-center justify-center">
                 <MapPin className="w-4 h-4 md:w-5 md:h-5 text-pink-600" />
               </div>
-              <span className="font-bold text-sm md:text-base text-gray-900">Biletarnica</span>
+              <span className="font-bold text-sm md:text-base text-gray-900 dark:text-foreground">Biletarnica</span>
             </div>
             <div className="space-y-1.5 md:space-y-2 text-xs md:text-sm">
               <div className="flex justify-between">
-                <span className="text-gray-600">Broj karata:</span>
-                <span className="font-bold text-gray-900">{biletarnicaBreakdown.count}</span>
+                <span className="text-gray-600 dark:text-muted-foreground">Broj karata:</span>
+                <span className="font-bold text-gray-900 dark:text-foreground">{biletarnicaBreakdown.count}</span>
               </div>
               <div className="flex justify-between">
-                <span className="text-gray-600">Ukupna prodaja:</span>
-                <span className="font-bold text-gray-900">
+                <span className="text-gray-600 dark:text-muted-foreground">Ukupna prodaja:</span>
+                <span className="font-bold text-gray-900 dark:text-foreground">
                   {formatCurrency(biletarnicaBreakdown.amount, currency, exchangeRate, false)}
                 </span>
               </div>
               <div className="flex justify-between">
-                <span className="text-gray-600">
+                <span className="text-gray-600 dark:text-muted-foreground">
                   Naknada ({biletarnicaBreakdown.feePercent}% + {pdvPercentFee}% PDV):
                 </span>
-                <span className="font-bold text-gray-900">
+                <span className="font-bold text-gray-900 dark:text-foreground">
                   {formatCurrency(biletarnicaBreakdown.totalFee, currency, exchangeRate, false)}
                 </span>
               </div>
@@ -504,30 +490,30 @@ export default function HomeScreen() {
         </Card>
 
         {/* Virman */}
-        <Card className="bg-white border border-gray-200 shadow-sm md:shadow-md border-t-4 border-t-sky-500 md:hover:shadow-lg transition-shadow">
+        <Card className="bg-white dark:bg-card border border-gray-200 dark:border-border shadow-sm md:shadow-md border-t-4 border-t-sky-500 md:hover:shadow-lg transition-shadow">
           <CardContent className="p-3 md:p-4">
             <div className="flex items-center gap-2 mb-2 md:mb-3">
-              <div className="w-8 h-8 md:w-10 md:h-10 rounded-full bg-sky-100 flex items-center justify-center">
+              <div className="w-8 h-8 md:w-10 md:h-10 rounded-full bg-sky-100 dark:bg-sky-500/20 flex items-center justify-center">
                 <Building className="w-4 h-4 md:w-5 md:h-5 text-sky-600" />
               </div>
-              <span className="font-bold text-sm md:text-base text-gray-900">Virman</span>
+              <span className="font-bold text-sm md:text-base text-gray-900 dark:text-foreground">Virman</span>
             </div>
             <div className="space-y-1.5 md:space-y-2 text-xs md:text-sm">
               <div className="flex justify-between">
-                <span className="text-gray-600">Broj karata:</span>
-                <span className="font-bold text-gray-900">{virmanBreakdown.count}</span>
+                <span className="text-gray-600 dark:text-muted-foreground">Broj karata:</span>
+                <span className="font-bold text-gray-900 dark:text-foreground">{virmanBreakdown.count}</span>
               </div>
               <div className="flex justify-between">
-                <span className="text-gray-600">Ukupna prodaja:</span>
-                <span className="font-bold text-gray-900">
+                <span className="text-gray-600 dark:text-muted-foreground">Ukupna prodaja:</span>
+                <span className="font-bold text-gray-900 dark:text-foreground">
                   {formatCurrency(virmanBreakdown.amount, currency, exchangeRate, false)}
                 </span>
               </div>
               <div className="flex justify-between">
-                <span className="text-gray-600">
+                <span className="text-gray-600 dark:text-muted-foreground">
                   Naknada ({virmanBreakdown.feePercent}% + {pdvPercentFee}% PDV):
                 </span>
-                <span className="font-bold text-gray-900">
+                <span className="font-bold text-gray-900 dark:text-foreground">
                   {formatCurrency(virmanBreakdown.totalFee, currency, exchangeRate, false)}
                 </span>
               </div>
@@ -536,30 +522,30 @@ export default function HomeScreen() {
         </Card>
 
         {/* Kartica */}
-        <Card className="bg-white border border-gray-200 shadow-sm md:shadow-md border-t-4 border-t-amber-500 md:hover:shadow-lg transition-shadow">
+        <Card className="bg-white dark:bg-card border border-gray-200 dark:border-border shadow-sm md:shadow-md border-t-4 border-t-amber-500 md:hover:shadow-lg transition-shadow">
           <CardContent className="p-3 md:p-4">
             <div className="flex items-center gap-2 mb-2 md:mb-3">
-              <div className="w-8 h-8 md:w-10 md:h-10 rounded-full bg-amber-100 flex items-center justify-center">
+              <div className="w-8 h-8 md:w-10 md:h-10 rounded-full bg-amber-100 dark:bg-amber-500/20 flex items-center justify-center">
                 <CreditCard className="w-4 h-4 md:w-5 md:h-5 text-amber-600" />
               </div>
-              <span className="font-bold text-sm md:text-base text-gray-900">Kartica</span>
+              <span className="font-bold text-sm md:text-base text-gray-900 dark:text-foreground">Kartica</span>
             </div>
             <div className="space-y-1.5 md:space-y-2 text-xs md:text-sm">
               <div className="flex justify-between">
-                <span className="text-gray-600">Broj karata:</span>
-                <span className="font-bold text-gray-900">{karticaBreakdown.count}</span>
+                <span className="text-gray-600 dark:text-muted-foreground">Broj karata:</span>
+                <span className="font-bold text-gray-900 dark:text-foreground">{karticaBreakdown.count}</span>
               </div>
               <div className="flex justify-between">
-                <span className="text-gray-600">Ukupna prodaja:</span>
-                <span className="font-bold text-gray-900">
+                <span className="text-gray-600 dark:text-muted-foreground">Ukupna prodaja:</span>
+                <span className="font-bold text-gray-900 dark:text-foreground">
                   {formatCurrency(karticaBreakdown.amount, currency, exchangeRate, false)}
                 </span>
               </div>
               <div className="flex justify-between">
-                <span className="text-gray-600">
+                <span className="text-gray-600 dark:text-muted-foreground">
                   Naknada ({karticaBreakdown.feePercent}% + {pdvPercentFee}% PDV):
                 </span>
-                <span className="font-bold text-gray-900">
+                <span className="font-bold text-gray-900 dark:text-foreground">
                   {formatCurrency(karticaBreakdown.totalFee, currency, exchangeRate, false)}
                 </span>
               </div>
@@ -668,7 +654,7 @@ export default function HomeScreen() {
                     <td>Online</td>
                     <td class="right">${onlineBreakdown.count}</td>
                     <td class="right">${formatCurrency(onlineBreakdown.amount, currency, null, false)}</td>
-                    <td class="right negative">-${formatCurrency(onlineBreakdown.totalFee + (onlineBreakdown.perTicketFeeTotal || 0), currency, null, false)}</td>
+                    <td class="right negative">-${formatCurrency(onlineBreakdown.totalFee, currency, null, false)}</td>
                   </tr>
                   <tr>
                     <td>Biletarnica</td>
@@ -867,11 +853,11 @@ export default function HomeScreen() {
         };
 
         return (
-          <Card className="bg-white border border-gray-200 shadow-sm">
+          <Card className="bg-white dark:bg-card border border-gray-200 dark:border-border shadow-sm">
             <CardHeader className="pb-2">
               <CardTitle className="text-sm flex items-center justify-between">
-                <div className="flex items-center gap-2 text-gray-900">
-                  <Receipt className="w-4 h-4 text-gray-700" />
+                <div className="flex items-center gap-2 text-gray-900 dark:text-foreground">
+                  <Receipt className="w-4 h-4 text-gray-700 dark:text-muted-foreground" />
                   Odbici i Finalna Isplata
                 </div>
                 <Button
@@ -887,8 +873,8 @@ export default function HomeScreen() {
             </CardHeader>
             <CardContent className="space-y-3">
               {/* Base payout */}
-              <div className="flex justify-between items-center p-2 bg-white border border-gray-200 rounded-lg">
-                <span className="text-sm text-gray-700 font-medium">Osnovni iznos za isplatu:</span>
+              <div className="flex justify-between items-center p-2 bg-gray-50 dark:bg-white/5 border border-gray-200 dark:border-border rounded-lg">
+                <span className="text-sm text-gray-700 dark:text-muted-foreground font-medium">Osnovni iznos za isplatu:</span>
                 <span className="font-bold text-emerald-600">{formatCurrency(forPayout, currency, exchangeRate)}</span>
               </div>
 
@@ -900,34 +886,34 @@ export default function HomeScreen() {
                 </div>
               ) : deductions.length > 0 ? (
                 <div className="space-y-1">
-                  <p className="text-xs text-gray-600 font-semibold uppercase tracking-wide">Dodatni odbici:</p>
+                  <p className="text-xs text-gray-600 dark:text-muted-foreground font-semibold uppercase tracking-wide">Dodatni odbici:</p>
                   {deductions.map((deduction, index) => (
                     <div
                       key={index}
-                      className="flex justify-between items-center p-2 bg-gray-50 border border-gray-200 rounded"
+                      className="flex justify-between items-center p-2 bg-gray-50 dark:bg-white/5 border border-gray-200 dark:border-border rounded"
                     >
-                      <span className="text-sm text-gray-700">{deduction.name}</span>
+                      <span className="text-sm text-gray-700 dark:text-muted-foreground">{deduction.name}</span>
                       <span className="text-sm font-bold text-red-600">
                         -{formatCurrency(deduction.amount, currency, exchangeRate, false)}
                       </span>
                     </div>
                   ))}
                   <div className="flex justify-between items-center p-2 border-t-2 border-gray-300 mt-2 pt-2">
-                    <span className="text-sm text-gray-600 font-medium">Ukupno odbici:</span>
+                    <span className="text-sm text-gray-600 dark:text-muted-foreground font-medium">Ukupno odbici:</span>
                     <span className="font-bold text-red-600">
                       -{formatCurrency(totalDeductions, currency, exchangeRate, false)}
                     </span>
                   </div>
                 </div>
               ) : (
-                <p className="text-xs text-gray-500 text-center py-2">Nema dodatnih odbitaka</p>
+                <p className="text-xs text-gray-500 dark:text-muted-foreground text-center py-2">Nema dodatnih odbitaka</p>
               )}
 
               {/* Final payout */}
-              <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-1 sm:gap-2 p-4 bg-white rounded-lg border border-gray-200 shadow-sm">
+              <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-1 sm:gap-2 p-4 bg-gray-50 dark:bg-white/5 rounded-lg border border-gray-200 dark:border-border shadow-sm">
                 <div className="flex items-center gap-2">
-                  <CheckCircle2 className="w-6 h-6 text-gray-700 flex-shrink-0" />
-                  <span className="font-bold text-sm sm:text-base text-gray-900">FINALNI IZNOS:</span>
+                  <CheckCircle2 className="w-6 h-6 text-gray-700 dark:text-muted-foreground flex-shrink-0" />
+                  <span className="font-bold text-sm sm:text-base text-gray-900 dark:text-foreground">FINALNI IZNOS:</span>
                 </div>
                 <span className="text-xl sm:text-2xl font-bold text-emerald-600 text-right">
                   {formatCurrency(finalPayout, currency, exchangeRate)}

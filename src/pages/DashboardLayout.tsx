@@ -33,8 +33,10 @@ import logo from "@/assets/fscg-logo.png";
 
 type Screen = "home" | "daily" | "location" | "categories" | "analysis" | "bukiranje";
 
-// FSCG brand color - red
+// FSCG brand color - red (used for active tabs etc.)
 const brandColor = "#C8102E";
+// Header color - dark navy
+const headerColor = "#0f172a";
 
 // Admin emails
 const ADMIN_EMAILS = ["rade.milosevic87@gmail.com"];
@@ -168,12 +170,12 @@ export default function DashboardLayout({ onSwitchToAdmin }: DashboardLayoutProp
       {/* Header */}
       <header
         className="fixed top-0 left-0 right-0 z-50 text-white shadow-lg"
-        style={{ backgroundColor: brandColor, paddingTop: "env(safe-area-inset-top, 0px)" }}
+        style={{ backgroundColor: headerColor, paddingTop: "env(safe-area-inset-top, 0px)" }}
       >
         <div className="flex items-center justify-between px-3 py-2">
           {/* Logo + Event Selector (mobile) */}
           <div className="flex items-center gap-2 flex-1 min-w-0">
-            <img src={logo} alt="FSCG" className="w-12 h-12 md:w-12 md:h-12 object-contain flex-shrink-0 rounded-lg bg-white/10 p-1" />
+            <img src={logo} alt="FSCG" className="w-12 h-12 object-contain flex-shrink-0" />
 
             {/* Mobile Event Selector */}
             <div className="md:hidden flex-1 min-w-0">
@@ -231,7 +233,7 @@ export default function DashboardLayout({ onSwitchToAdmin }: DashboardLayoutProp
             {isAdmin && onSwitchToAdmin && (
               <button
                 onClick={onSwitchToAdmin}
-                className="flex items-center gap-1.5 px-3 py-2 rounded-xl bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-400 hover:to-orange-400 transition-all shadow-lg"
+                className="flex items-center gap-1.5 px-3 py-2 rounded-xl bg-white/15 hover:bg-white/25 transition-all border border-white/20"
               >
                 <Shield className="w-4 h-4" />
                 <span className="text-xs font-semibold hidden sm:inline">Admin</span>
@@ -275,7 +277,8 @@ export default function DashboardLayout({ onSwitchToAdmin }: DashboardLayoutProp
 
       {/* Bottom Navigation - Mobile */}
       <nav
-        className="fixed bottom-0 left-0 right-0 bg-card border-t border-border z-50 md:hidden"
+        className="fixed bottom-0 left-0 right-0 z-50 md:hidden border-t border-white/10"
+        style={{ backgroundColor: "#0f172a" }}
         style={{ paddingBottom: "env(safe-area-inset-bottom, 0px)" }}
       >
         <div className="flex justify-around items-center h-16 px-1">
@@ -291,7 +294,7 @@ export default function DashboardLayout({ onSwitchToAdmin }: DashboardLayoutProp
                 onClick={() => handleTabPress(id)}
                 className={`
                   relative flex flex-col items-center justify-center flex-1 h-14 mx-0.5 rounded-xl transition-all duration-200
-                  ${isActive ? "text-white" : "text-muted-foreground hover:text-foreground hover:bg-muted/50"}
+                  ${isActive ? "text-white" : "text-slate-400 hover:text-slate-200 hover:bg-white/5"}
                   ${isPressed ? "scale-95" : ""}
                 `}
                 style={isActive ? { backgroundColor: `${tabColor}15`, color: tabColor } : {}}
@@ -364,7 +367,7 @@ export default function DashboardLayout({ onSwitchToAdmin }: DashboardLayoutProp
             </div>
             <button
               onClick={onSwitchToAdmin}
-              className="flex items-center gap-3 px-4 py-3 rounded-xl transition-all duration-200 bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-400 hover:to-orange-400 text-white shadow-lg"
+              className="flex items-center gap-3 px-4 py-3 rounded-xl transition-all duration-200 bg-slate-700 hover:bg-slate-600 text-white"
             >
               <Shield className="w-5 h-5" />
               <span className="font-medium text-sm">Admin Panel</span>

@@ -793,7 +793,7 @@ export default function AdminDashboard({ onSwitchToOrganizer }: Props) {
       >
         <div className="max-w-7xl mx-auto px-4 lg:px-8 py-3 flex items-center justify-between">
           <div className="flex items-center gap-3">
-            <div className="w-10 h-10 lg:w-12 lg:h-12 bg-gradient-to-br from-amber-500 to-orange-600 rounded-xl flex items-center justify-center">
+            <div className="w-10 h-10 lg:w-12 lg:h-12 bg-gradient-to-br from-red-600 to-red-800 rounded-xl flex items-center justify-center">
               <BarChart3 className="w-5 h-5 lg:w-6 lg:h-6 text-white" />
             </div>
             <div>
@@ -882,7 +882,7 @@ export default function AdminDashboard({ onSwitchToOrganizer }: Props) {
             onClick={() => setActiveTab("events")}
             className={`flex-1 py-2 px-4 rounded-lg text-sm font-medium flex items-center justify-center gap-2 transition-colors ${
               activeTab === "events"
-                ? "bg-amber-500/20 text-amber-400 border border-amber-500/30"
+                ? "bg-red-500/20 text-red-400 border border-red-500/30"
                 : "bg-slate-800/50 text-slate-400 border border-slate-700"
             }`}
           >
@@ -1053,7 +1053,7 @@ export default function AdminDashboard({ onSwitchToOrganizer }: Props) {
                   <button
                     key={f}
                     onClick={() => toggleSort(f)}
-                    className={`px-2 py-1 rounded text-xs ${sortBy === f ? "bg-amber-500/20 text-amber-400" : "text-slate-500"}`}
+                    className={`px-2 py-1 rounded text-xs ${sortBy === f ? "bg-red-500/20 text-red-400" : "text-slate-500"}`}
                   >
                     {f === "date" ? "Dat" : f === "revenue" ? "€" : "#"}
                     {sortBy === f && (sortDir === "asc" ? "↑" : "↓")}

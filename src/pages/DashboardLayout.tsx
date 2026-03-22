@@ -12,7 +12,10 @@ import {
   Clock,
   Bookmark,
   Shield,
+  Sun,
+  Moon,
 } from "lucide-react";
+import { useTheme } from "@/hooks/use-theme";
 import { Button } from "@/components/ui/button";
 import {
   DropdownMenu,
@@ -57,6 +60,7 @@ export default function DashboardLayout({ onSwitchToAdmin }: DashboardLayoutProp
     useDashboard();
   const [activeScreen, setActiveScreen] = useState<Screen>("home");
   const [pressedTab, setPressedTab] = useState<Screen | null>(null);
+  const { isDark, toggle: toggleTheme } = useTheme();
 
   const selectedEventData = eventsList.find((e) => e.eventId === selectedEventId);
   const selectedEventName = selectedEventData?.eventName || "Izaberite utakmicu";
@@ -254,6 +258,14 @@ export default function DashboardLayout({ onSwitchToAdmin }: DashboardLayoutProp
                   {lastUpdate.toLocaleTimeString("sr-Latn", { hour: "2-digit", minute: "2-digit" })}
                 </span>
               )}
+            </button>
+
+            <button
+              onClick={toggleTheme}
+              className="flex items-center justify-center h-9 w-9 rounded-xl bg-white/10 hover:bg-white/20 transition-all text-white"
+              title={isDark ? "Svijetli mod" : "Tamni mod"}
+            >
+              {isDark ? <Sun className="w-4 h-4" /> : <Moon className="w-4 h-4" />}
             </button>
 
             <Button

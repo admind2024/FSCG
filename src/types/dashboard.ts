@@ -64,6 +64,8 @@ export interface EventData {
   paidTicketsCount?: number;
   // Alokacije
   allocations?: Allocation[];
+  // Stadionski kapacitet po sektorima (za FSCG utakmice)
+  stadiumCapacity?: any;
 }
 
 // ============================================
@@ -105,6 +107,7 @@ export interface Ticket {
   customerPhone?: string;
   entrance?: string;
   view?: string;
+  karta?: string;
 }
 
 // ============================================

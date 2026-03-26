@@ -1045,21 +1045,7 @@ export default function CategoriesScreen() {
           <CardContent className="p-0">
             <div className="overflow-x-auto">
               <table className="w-full text-xs">
-                <thead>
-                  <tr className="border-b bg-gray-100 dark:bg-gray-800">
-                    <th className="sticky left-0 z-10 bg-gray-100 dark:bg-gray-800 px-2 py-2 text-left font-semibold min-w-[140px] border-r shadow-[2px_0_4px_-2px_rgba(0,0,0,0.15)]">
-                      Sektor
-                    </th>
-                    <th className="px-2 py-2 text-right font-semibold bg-success/10">eTickets</th>
-                    <th className="px-2 py-2 text-right font-semibold bg-slate-50 dark:bg-slate-500/10">Gratis</th>
-                    <th className="px-2 py-2 text-right font-semibold bg-amber-50 dark:bg-amber-500/10">Savez</th>
-                    <th className="px-2 py-2 text-right font-semibold bg-cyan-50 dark:bg-cyan-500/10">Igrači</th>
-                    <th className="px-2 py-2 text-right font-semibold">Ukupno</th>
-                    <th className="px-2 py-2 text-right font-semibold">Kap.</th>
-                    <th className="px-2 py-2 text-right font-semibold bg-green-50 dark:bg-green-500/10">Slobodno</th>
-                    <th className="px-2 py-2 text-right font-semibold">%</th>
-                  </tr>
-                </thead>
+                <thead></thead>
                 <tbody>
                   {sectorsByTribune.map((group) => {
                     const tribTotals = group.sectors.reduce(
@@ -1079,8 +1065,22 @@ export default function CategoriesScreen() {
 
                     return (
                       <React.Fragment key={group.tribune}>
+                        {/* Column headers repeated per tribune */}
+                        <tr className="border-b bg-gray-100 dark:bg-gray-800 border-t-2">
+                          <th className="sticky left-0 z-10 bg-gray-100 dark:bg-gray-800 px-2 py-1.5 text-left font-semibold min-w-[140px] border-r shadow-[2px_0_4px_-2px_rgba(0,0,0,0.15)] text-[10px]">
+                            Sektor
+                          </th>
+                          <th className="px-2 py-1.5 text-right font-semibold bg-success/10 text-[10px]">eTickets</th>
+                          <th className="px-2 py-1.5 text-right font-semibold bg-slate-50 dark:bg-slate-500/10 text-[10px]">Gratis</th>
+                          <th className="px-2 py-1.5 text-right font-semibold bg-amber-50 dark:bg-amber-500/10 text-[10px]">Savez</th>
+                          <th className="px-2 py-1.5 text-right font-semibold bg-cyan-50 dark:bg-cyan-500/10 text-[10px]">Igrači</th>
+                          <th className="px-2 py-1.5 text-right font-semibold text-[10px]">Ukupno</th>
+                          <th className="px-2 py-1.5 text-right font-semibold text-[10px]">Kap.</th>
+                          <th className="px-2 py-1.5 text-right font-semibold bg-green-50 dark:bg-green-500/10 text-[10px]">Slobodno</th>
+                          <th className="px-2 py-1.5 text-right font-semibold text-[10px]">%</th>
+                        </tr>
                         {/* Tribune header row */}
-                        <tr className="bg-muted/60 border-t-2">
+                        <tr className="bg-muted/60">
                           <td
                             className="sticky left-0 z-10 bg-gray-200 dark:bg-gray-700 px-2 py-2 font-bold border-r shadow-[2px_0_4px_-2px_rgba(0,0,0,0.15)]"
                           >

@@ -5,7 +5,13 @@ import {
   formatCurrencyNoDecimals,
   filterVisibleTickets,
   getTotalCapacity,
+  normalizeSalesChannel,
 } from "@/lib/dashboard-utils";
+import {
+  StadiumCapacity,
+  parseTribuneAndSector,
+  getStadiumCapacityBySector,
+} from "@/lib/stadium-capacity";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
 import { Input } from "@/components/ui/input";
@@ -26,6 +32,9 @@ import {
   Gift,
   Clock,
   ExternalLink,
+  ChevronDown,
+  ChevronRight,
+  MapPin,
 } from "lucide-react";
 import { Skeleton } from "@/components/ui/skeleton";
 import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip } from "recharts";
@@ -130,6 +139,146 @@ function groupCategoryStatsByTribune(
   });
 
   return Array.from(groupMap.values()).sort((a, b) => b.count - a.count);
+}
+
+// ═══════════════════════════════════════════════════════════════
+// SEKTOR STATISTIKA - za stadionske utakmice
+// ═══════════════════════════════════════════════════════════════
+
+interface SectorStats {
+  tribune: string;
+  sector: string;
+  count: number;
+  capacity: number;
+  fillPercentage: number;
+  online: number;
+  biletarnica: number;
+  virman: number;
+  kartica: number;
+  amount: number;
+}
+
+interface TribuneSectorGroup {
+  tribune: string;
+  totalCount: number;
+  totalCapacity: number;
+  fillPercentage: number;
+  sectors: SectorStats[];
+  online: number;
+  biletarnica: number;
+  virman: number;
+  kartica: number;
+  amount: number;
+}
+
+function calculateSectorStats(
+  tickets: any[],
+  stadium: StadiumCapacity,
+): TribuneSectorGroup[] {
+  const sectorCapacity = getStadiumCapacityBySector(stadium);
+
+  // Inicijalizuj mapu sa svim sektorima (čak i praznim)
+  const tribuneMap = new Map<string, Map<string, SectorStats>>();
+
+  for (const tribune of stadium.tribunes) {
+    const sectorMap = new Map<string, SectorStats>();
+    for (const sector of tribune.sectors) {
+      sectorMap.set(sector.name, {
+        tribune: tribune.tribune,
+        sector: sector.name,
+        count: 0,
+        capacity: sector.capacity,
+        fillPercentage: 0,
+        online: 0,
+        biletarnica: 0,
+        virman: 0,
+        kartica: 0,
+        amount: 0,
+      });
+    }
+    tribuneMap.set(tribune.tribune, sectorMap);
+  }
+
+  // Dodaj "Neraspoređeno" sektor za karte bez sektora
+  for (const tribune of stadium.tribunes) {
+    const sectorMap = tribuneMap.get(tribune.tribune)!;
+    sectorMap.set("_neraspoređeno", {
+      tribune: tribune.tribune,
+      sector: "Neraspoređeno",
+      count: 0,
+      capacity: 0,
+      fillPercentage: 0,
+      online: 0,
+      biletarnica: 0,
+      virman: 0,
+      kartica: 0,
+      amount: 0,
+    });
+  }
+
+  // Rasporedi karte po sektorima
+  tickets.forEach((ticket) => {
+    const result = parseTribuneAndSector(ticket.category, ticket.karta, stadium);
+    if (!result) return;
+
+    const sectorMap = tribuneMap.get(result.tribune);
+    if (!sectorMap) return;
+
+    const sectorKey = result.sector || "_neraspoređeno";
+    let sectorStats = sectorMap.get(sectorKey);
+    if (!sectorStats) {
+      // Karta ima sektor koji nije u kapacitetu - stavi u neraspoređeno
+      sectorStats = sectorMap.get("_neraspoređeno")!;
+    }
+
+    const channel = normalizeSalesChannel(ticket.salesChannel);
+    const price = Number(ticket.price) || 0;
+
+    sectorStats.count++;
+    sectorStats.amount += price;
+
+    if (channel === "Online") sectorStats.online++;
+    else if (channel === "Biletarnica") sectorStats.biletarnica++;
+    else if (channel === "Virman") sectorStats.virman++;
+    else sectorStats.kartica++;
+  });
+
+  // Izgradi rezultat
+  const result: TribuneSectorGroup[] = [];
+
+  // Poredak tribina
+  const tribuneOrder = ["Zapad", "Istok", "Sjever", "Jug", "VIP"];
+
+  for (const tribuneName of tribuneOrder) {
+    const sectorMap = tribuneMap.get(tribuneName);
+    if (!sectorMap) continue;
+
+    const sectors = Array.from(sectorMap.values())
+      .filter(s => s.sector !== "Neraspoređeno" || s.count > 0) // Sakrij prazne "Neraspoređeno"
+      .map(s => ({
+        ...s,
+        fillPercentage: s.capacity > 0 ? (s.count / s.capacity) * 100 : 0,
+      }));
+
+    const tribune = stadium.tribunes.find(t => t.tribune === tribuneName);
+    const totalCount = sectors.reduce((sum, s) => sum + s.count, 0);
+    const totalCapacity = tribune?.totalCapacity || 0;
+
+    result.push({
+      tribune: tribuneName,
+      totalCount,
+      totalCapacity,
+      fillPercentage: totalCapacity > 0 ? (totalCount / totalCapacity) * 100 : 0,
+      sectors,
+      online: sectors.reduce((sum, s) => sum + s.online, 0),
+      biletarnica: sectors.reduce((sum, s) => sum + s.biletarnica, 0),
+      virman: sectors.reduce((sum, s) => sum + s.virman, 0),
+      kartica: sectors.reduce((sum, s) => sum + s.kartica, 0),
+      amount: sectors.reduce((sum, s) => sum + s.amount, 0),
+    });
+  }
+
+  return result;
 }
 
 const DEFAULT_COLORS = [
@@ -543,6 +692,7 @@ export default function CategoriesScreen() {
   const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
   const [showAllTables, setShowAllTables] = useState(true);
   const [tableSearch, setTableSearch] = useState("");
+  const [expandedTribunes, setExpandedTribunes] = useState<Set<string>>(new Set());
 
   // Alokacije iz event-a
   const allocations: Allocation[] = useMemo(() => {
@@ -578,6 +728,24 @@ export default function CategoriesScreen() {
   }, [selectedEvent?.tickets]);
 
   const totalGratis = gratisByCategory.reduce((sum, g) => sum + g.count, 0);
+
+  // Sektor statistika - samo za stadionske events
+  const stadiumCapacity: StadiumCapacity | null = (selectedEvent as any)?.stadiumCapacity || null;
+
+  const sectorStats = useMemo(() => {
+    if (!selectedEvent?.tickets || !stadiumCapacity) return null;
+    const visibleTickets = filterVisibleTickets(selectedEvent.tickets);
+    return calculateSectorStats(visibleTickets, stadiumCapacity);
+  }, [selectedEvent?.tickets, stadiumCapacity]);
+
+  const toggleTribune = (tribune: string) => {
+    setExpandedTribunes((prev) => {
+      const next = new Set(prev);
+      if (next.has(tribune)) next.delete(tribune);
+      else next.add(tribune);
+      return next;
+    });
+  };
 
   const eventName = (selectedEvent as any)?.name || (selectedEvent as any)?.title || "Event";
 
@@ -912,6 +1080,171 @@ export default function CategoriesScreen() {
           </div>
         </CardContent>
       </Card>
+
+      {/* ═══════════════════════════════════════════════════════════════ */}
+      {/* STATISTIKA PO SEKTORIMA - tribina → sektori (samo za stadionske events) */}
+      {/* ═══════════════════════════════════════════════════════════════ */}
+      {sectorStats && sectorStats.length > 0 && (
+        <Card className="md:shadow-md">
+          <CardHeader className="pb-2">
+            <CardTitle className="text-sm flex items-center gap-2">
+              <MapPin className="w-4 h-4" />
+              Statistika po Sektorima
+              <span className="text-xs text-muted-foreground font-normal ml-1">
+                ({stadiumCapacity?.name})
+              </span>
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="p-0">
+            <div className="overflow-x-auto">
+              <table className="w-full text-xs">
+                <thead>
+                  <tr className="border-b bg-gray-100 dark:bg-gray-800">
+                    <th className="sticky left-0 z-10 bg-gray-100 dark:bg-gray-800 px-2 py-2 text-left font-semibold min-w-[160px] border-r shadow-[2px_0_4px_-2px_rgba(0,0,0,0.15)]">
+                      Tribina / Sektor
+                    </th>
+                    <th className="px-2 py-2 text-right font-semibold bg-success/10">Prodato</th>
+                    <th className="px-2 py-2 text-right font-semibold">Kap.</th>
+                    <th className="px-2 py-2 text-right font-semibold bg-green-50 dark:bg-green-500/10">Slobodno</th>
+                    <th className="px-2 py-2 text-right font-semibold">%</th>
+                    <th className="px-2 py-2 text-right font-semibold bg-channel-online-bg/30">Onl.</th>
+                    <th className="px-2 py-2 text-right font-semibold bg-channel-biletarnica-bg/30">Bil.</th>
+                    <th className="px-2 py-2 text-right font-semibold bg-channel-virman-bg/30">Vir.</th>
+                    <th className="px-2 py-2 text-right font-semibold bg-channel-kartica-bg/30">Kar.</th>
+                    <th className="px-2 py-2 text-right font-semibold bg-success/10">Iznos</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {sectorStats.map((tg) => {
+                    const isExpanded = expandedTribunes.has(tg.tribune);
+                    const tColor = getCategoryColor(tg.tribune, 0);
+                    const remaining = Math.max(0, tg.totalCapacity - tg.totalCount);
+
+                    return (
+                      <>
+                        {/* TRIBINA RED - klikni za expand */}
+                        <tr
+                          key={tg.tribune}
+                          className="bg-muted/40 hover:bg-muted/60 cursor-pointer transition-colors border-t"
+                          onClick={() => toggleTribune(tg.tribune)}
+                        >
+                          <td className="sticky left-0 z-10 bg-gray-50 dark:bg-gray-800 px-2 py-2.5 border-r shadow-[2px_0_4px_-2px_rgba(0,0,0,0.15)] whitespace-nowrap">
+                            <div className="flex items-center gap-1.5">
+                              {isExpanded ? (
+                                <ChevronDown className="w-3.5 h-3.5 text-muted-foreground" />
+                              ) : (
+                                <ChevronRight className="w-3.5 h-3.5 text-muted-foreground" />
+                              )}
+                              <span
+                                className="px-2 py-0.5 rounded text-[10px] font-bold border"
+                                style={{ borderColor: tColor, color: tColor }}
+                              >
+                                {tg.tribune}
+                              </span>
+                              <span className="text-[9px] text-muted-foreground">({tg.sectors.length} sekt.)</span>
+                            </div>
+                          </td>
+                          <td className="px-2 py-2.5 text-right font-bold text-success bg-success/5">{tg.totalCount}</td>
+                          <td className="px-2 py-2.5 text-right font-bold text-muted-foreground">{tg.totalCapacity}</td>
+                          <td className="px-2 py-2.5 text-right font-bold text-green-600 bg-green-50 dark:bg-green-500/10">{remaining}</td>
+                          <td className="px-2 py-2.5 text-right font-bold">
+                            <span className={`${tg.fillPercentage > 80 ? "text-red-600" : tg.fillPercentage > 50 ? "text-amber-600" : "text-muted-foreground"}`}>
+                              {tg.fillPercentage.toFixed(1)}%
+                            </span>
+                          </td>
+                          <td className="px-2 py-2.5 text-right font-bold bg-channel-online-bg/20 text-channel-online">{tg.online || "-"}</td>
+                          <td className="px-2 py-2.5 text-right font-bold bg-channel-biletarnica-bg/20 text-channel-biletarnica">{tg.biletarnica || "-"}</td>
+                          <td className="px-2 py-2.5 text-right font-bold bg-channel-virman-bg/20 text-channel-virman">{tg.virman || "-"}</td>
+                          <td className="px-2 py-2.5 text-right font-bold bg-channel-kartica-bg/20 text-channel-kartica">{tg.kartica || "-"}</td>
+                          <td className="px-2 py-2.5 text-right font-bold bg-success/5 text-success">
+                            {formatCurrencyNoDecimals(tg.amount, currency, exchangeRate, false)}
+                          </td>
+                        </tr>
+
+                        {/* SEKTORI - prikazuju se kad je tribina expandovana */}
+                        {isExpanded &&
+                          tg.sectors.map((s, sIdx) => {
+                            const sRemaining = Math.max(0, s.capacity - s.count);
+                            return (
+                              <tr
+                                key={`${tg.tribune}-${s.sector}`}
+                                className={`${sIdx % 2 === 0 ? "bg-card" : "bg-muted/10"} transition-colors`}
+                              >
+                                <td className={`sticky left-0 z-10 px-2 py-1.5 pl-8 border-r shadow-[2px_0_4px_-2px_rgba(0,0,0,0.15)] whitespace-nowrap ${sIdx % 2 === 0 ? "bg-white dark:bg-gray-900" : "bg-gray-50 dark:bg-gray-800/50"}`}>
+                                  <span className="text-[10px] text-muted-foreground">{s.sector}</span>
+                                </td>
+                                <td className="px-2 py-1.5 text-right font-semibold text-success bg-success/5">{s.count}</td>
+                                <td className="px-2 py-1.5 text-right text-muted-foreground">{s.capacity || "-"}</td>
+                                <td className="px-2 py-1.5 text-right font-medium text-green-600 bg-green-50 dark:bg-green-500/10">
+                                  {s.capacity > 0 ? sRemaining : "-"}
+                                </td>
+                                <td className="px-2 py-1.5 text-right">
+                                  {s.capacity > 0 ? (
+                                    <span className={`text-[10px] ${s.fillPercentage > 80 ? "text-red-600 font-semibold" : s.fillPercentage > 50 ? "text-amber-600" : "text-muted-foreground"}`}>
+                                      {s.fillPercentage.toFixed(1)}%
+                                    </span>
+                                  ) : "-"}
+                                </td>
+                                <td className="px-2 py-1.5 text-right bg-channel-online-bg/10 text-channel-online">{s.online || "-"}</td>
+                                <td className="px-2 py-1.5 text-right bg-channel-biletarnica-bg/10 text-channel-biletarnica">{s.biletarnica || "-"}</td>
+                                <td className="px-2 py-1.5 text-right bg-channel-virman-bg/10 text-channel-virman">{s.virman || "-"}</td>
+                                <td className="px-2 py-1.5 text-right bg-channel-kartica-bg/10 text-channel-kartica">{s.kartica || "-"}</td>
+                                <td className="px-2 py-1.5 text-right bg-success/5 text-success text-[10px]">
+                                  {s.amount > 0 ? formatCurrencyNoDecimals(s.amount, currency, exchangeRate, false) : "-"}
+                                </td>
+                              </tr>
+                            );
+                          })}
+                      </>
+                    );
+                  })}
+                </tbody>
+                <tfoot>
+                  <tr className="border-t-2 bg-muted font-bold">
+                    <td className="sticky left-0 z-10 bg-gray-200 dark:bg-gray-700 px-2 py-2 border-r shadow-[2px_0_4px_-2px_rgba(0,0,0,0.15)]">
+                      UKUPNO
+                    </td>
+                    <td className="px-2 py-2 text-right text-success bg-success/10">
+                      {sectorStats.reduce((sum, t) => sum + t.totalCount, 0)}
+                    </td>
+                    <td className="px-2 py-2 text-right">
+                      {stadiumCapacity?.totalCapacity || 0}
+                    </td>
+                    <td className="px-2 py-2 text-right text-green-600 bg-green-50 dark:bg-green-500/10">
+                      {Math.max(0, (stadiumCapacity?.totalCapacity || 0) - sectorStats.reduce((sum, t) => sum + t.totalCount, 0))}
+                    </td>
+                    <td className="px-2 py-2 text-right">
+                      {stadiumCapacity?.totalCapacity
+                        ? ((sectorStats.reduce((sum, t) => sum + t.totalCount, 0) / stadiumCapacity.totalCapacity) * 100).toFixed(1)
+                        : 0}%
+                    </td>
+                    <td className="px-2 py-2 text-right bg-channel-online-bg/30">
+                      {sectorStats.reduce((sum, t) => sum + t.online, 0)}
+                    </td>
+                    <td className="px-2 py-2 text-right bg-channel-biletarnica-bg/30">
+                      {sectorStats.reduce((sum, t) => sum + t.biletarnica, 0)}
+                    </td>
+                    <td className="px-2 py-2 text-right bg-channel-virman-bg/30">
+                      {sectorStats.reduce((sum, t) => sum + t.virman, 0)}
+                    </td>
+                    <td className="px-2 py-2 text-right bg-channel-kartica-bg/30">
+                      {sectorStats.reduce((sum, t) => sum + t.kartica, 0)}
+                    </td>
+                    <td className="px-2 py-2 text-right bg-success/10 text-success">
+                      {formatCurrencyNoDecimals(
+                        sectorStats.reduce((sum, t) => sum + t.amount, 0),
+                        currency,
+                        exchangeRate,
+                        false,
+                      )}
+                    </td>
+                  </tr>
+                </tfoot>
+              </table>
+            </div>
+          </CardContent>
+        </Card>
+      )}
 
       {/* Main content grid - Chart and Categories side by side on desktop */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-3 md:gap-4">

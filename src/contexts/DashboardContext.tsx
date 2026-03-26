@@ -5,6 +5,7 @@
 // ALOKACIJE - dodane iz AboutEvents.allocations
 import React, { createContext, useContext, useState, useEffect } from "react";
 import { User, EventData, EventInfo, Ticket } from "@/types/dashboard";
+import { getStadiumCapacity, getStadiumCapacityFlat, isFSCGEvent } from "@/lib/stadium-capacity";
 
 // ============================================
 // SUPABASE DIREKTNO
@@ -588,8 +589,20 @@ export function DashboardProvider({ children }: { children: React.ReactNode }) {
         const biletarnicaSkipRate = parseInt(eventInfo?.biletarnica || "0");
 
         const capacityString = eventInfo?.capacity || "";
-        const capacityByCategory = parseCapacityString(capacityString);
-        const totalCapacity = Object.values(capacityByCategory).reduce((sum, cap) => sum + cap, 0);
+        let capacityByCategory = parseCapacityString(capacityString);
+        let totalCapacity = Object.values(capacityByCategory).reduce((sum, cap) => sum + cap, 0);
+
+        // ═══════════════════════════════════════════════════════════
+        // STADIONSKI KAPACITET - za FSCG utakmice koristi predefinisani kapacitet
+        // ═══════════════════════════════════════════════════════════
+        const venue = eventInfo?.venue || "";
+        const eventName = eventInfo?.name || "";
+        const stadiumCapacity = getStadiumCapacity(venue);
+        if (stadiumCapacity && isFSCGEvent(eventName)) {
+          capacityByCategory = getStadiumCapacityFlat(stadiumCapacity);
+          totalCapacity = stadiumCapacity.totalCapacity;
+          console.log("Using stadium capacity for:", stadiumCapacity.name, totalCapacity);
+        }
 
         const skipRateResult = await markTicketsAsHidden(allTickets, onlineSkipRate, biletarnicaSkipRate);
 
@@ -669,6 +682,7 @@ export function DashboardProvider({ children }: { children: React.ReactNode }) {
             customerPhone: row.customerPhone || "",
             entrance: row.entrance || "",
             view: row.View || "",
+            karta: row.Karta || row.karta || "",
             cardBrand: row.cardBrand || null,
             cardCountry: row.cardCountry || null,
             cardDescription: row.cardDescription || null,
@@ -753,6 +767,8 @@ export function DashboardProvider({ children }: { children: React.ReactNode }) {
           // ALOKACIJE - iz AboutEvents.allocations polja
           // ═══════════════════════════════════════════════════════════
           allocations,
+          // Stadionski kapacitet po sektorima (za FSCG utakmice)
+          stadiumCapacity: stadiumCapacity || undefined,
         };
 
         console.log("Dashboard loaded:", {

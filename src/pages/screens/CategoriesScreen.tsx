@@ -61,6 +61,7 @@ const TRIBUNE_GROUPS = ["istok", "zapad", "sjever", "jug", "vip"];
 
 function getTribuneGroup(category: string): string {
   const lower = category.toLowerCase().trim();
+  if (lower === "nedostupno") return "Zapad";
   for (const group of TRIBUNE_GROUPS) {
     if (lower.startsWith(group)) {
       // Capitalize first letter
@@ -617,10 +618,11 @@ export default function CategoriesScreen() {
 
   const currency = selectedEvent.currency;
 
-  // Savez i Igraci karte po kategorijama
+  // Savez i Igraci karte (iz posebnog polja - isključene iz eTickets prodaje)
+  const savezIgraciTickets = (selectedEvent as any).savezIgraciTickets || [];
   const savezByCategory: Record<string, number> = {};
   const igraciByCategory: Record<string, number> = {};
-  allTickets.forEach((t) => {
+  savezIgraciTickets.forEach((t: any) => {
     const ch = (t.salesChannel || "").trim();
     const cat = t.category || "Ostalo";
     if (ch === "Savez") savezByCategory[cat] = (savezByCategory[cat] || 0) + 1;
@@ -655,33 +657,28 @@ export default function CategoriesScreen() {
     }
 
     // Rasporedi karte po sektorima
-    allTickets.forEach((t: any) => {
+    // Helper za dodavanje karte u sektorsku mapu
+    const addToSector = (t: any, type: "etickets" | "gratis" | "savez" | "igraci") => {
       const { tribune, sector } = extractSectorForTicket(t.category || "", t.seatId || "");
       const key = `${tribune}|${sector}`;
-
       if (!sectorMap.has(key)) {
-        // Sektor koji nije u kapacitetu - dodaj ga
-        sectorMap.set(key, {
-          tribune,
-          sector,
-          etickets: 0,
-          gratis: 0,
-          savez: 0,
-          igraci: 0,
-          total: 0,
-          capacity: 0,
-        });
+        sectorMap.set(key, { tribune, sector, etickets: 0, gratis: 0, savez: 0, igraci: 0, total: 0, capacity: 0 });
       }
-
       const stat = sectorMap.get(key)!;
-      const ch = (t.salesChannel || "").trim();
-      const price = Number(t.price) || 0;
-
       stat.total++;
-      if (ch === "Savez") stat.savez++;
-      else if (ch === "Igraci") stat.igraci++;
-      else if (price === 0) stat.gratis++;
-      else stat.etickets++;
+      stat[type]++;
+    };
+
+    // eTickets karte (prodaja + gratis)
+    allTickets.forEach((t: any) => {
+      const price = Number(t.price) || 0;
+      addToSector(t, price === 0 ? "gratis" : "etickets");
+    });
+
+    // Savez/Igraci karte (isključene iz prodaje, samo za kapacitet)
+    savezIgraciTickets.forEach((t: any) => {
+      const ch = (t.salesChannel || "").trim();
+      addToSector(t, ch === "Savez" ? "savez" : "igraci");
     });
 
     sectorStats.push(...Array.from(sectorMap.values()));

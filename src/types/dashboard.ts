@@ -64,6 +64,8 @@ export interface EventData {
   paidTicketsCount?: number;
   // Alokacije
   allocations?: Allocation[];
+  // Savez/Igraci karte - isključene iz prodaje, ali broje u kapacitet
+  savezIgraciTickets?: Ticket[];
 }
 
 // ============================================

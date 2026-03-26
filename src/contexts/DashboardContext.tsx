@@ -632,6 +632,24 @@ export function DashboardProvider({ children }: { children: React.ReactNode }) {
         });
 
         // ═══════════════════════════════════════════════════════════
+        // SAVEZ/IGRACI KARTE - isključene iz prodaje, ali broje u kapacitet tribina
+        // ═══════════════════════════════════════════════════════════
+        const savezIgraciTicketsRaw: Ticket[] = ticketsAfterSkipRate
+          .filter((t: any) => isExcludedChannel(t) && !isTicketHidden(t) && t.status !== "refunded")
+          .map((row: any) => ({
+            ticketId: row.ticketId || "",
+            seatId: row.seatId || "",
+            price: parseFloat(row.price || "0"),
+            category: row.category || "",
+            customerName: row.customerName || "",
+            purchaseDate: row.Purchasedate || row.purchaseDate || "",
+            purchaseTime: row.purchaseTime || "",
+            salesChannel: normalizeSalesChannel(row.salesChannel),
+            city: row.city || "",
+            country: row.country || "",
+          }));
+
+        // ═══════════════════════════════════════════════════════════
         // GRATIS KARTE - price === 0, odvojene od plaćenih
         // ═══════════════════════════════════════════════════════════
         const gratisTicketsRaw = visibleTickets.filter((t: any) => parseFloat(t.price || "0") === 0);
@@ -757,6 +775,10 @@ export function DashboardProvider({ children }: { children: React.ReactNode }) {
           gratisCount: gratisTickets.length,
           gratisTickets,
           paidTicketsCount: paidTicketsRaw.length,
+          // ═══════════════════════════════════════════════════════════
+          // SAVEZ/IGRACI KARTE - za kapacitet tribina
+          // ═══════════════════════════════════════════════════════════
+          savezIgraciTickets: savezIgraciTicketsRaw,
           // ═══════════════════════════════════════════════════════════
           // ALOKACIJE - iz AboutEvents.allocations polja
           // ═══════════════════════════════════════════════════════════

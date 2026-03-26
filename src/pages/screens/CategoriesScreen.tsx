@@ -1,4 +1,4 @@
-import { useState, useMemo } from "react";
+import React, { useState, useMemo } from "react";
 import { useDashboard } from "@/contexts/DashboardContext";
 import {
   calculateCategoryStats,
@@ -6,6 +6,12 @@ import {
   filterVisibleTickets,
   getTotalCapacity,
 } from "@/lib/dashboard-utils";
+import {
+  isGradskiStadion,
+  GRADSKI_STADION_SECTORS,
+  getTribuneCapacities,
+  extractSectorForTicket,
+} from "@/lib/stadium-config";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
 import { Input } from "@/components/ui/input";
@@ -595,7 +601,15 @@ export default function CategoriesScreen() {
   const paidTickets = allTickets.filter((t) => t.price > 0);
   const totalTickets = allTickets.length;
   const totalPaid = paidTickets.length;
-  const totalCapacity = getTotalCapacity(selectedEvent.capacity);
+
+  // Gradski stadion detekcija
+  const venue = selectedEvent.venue || "";
+  const isStadion = isGradskiStadion(venue);
+
+  // Kapacitet - koristi hardkodirani za Gradski stadion
+  const totalCapacity = isStadion
+    ? Object.values(getTribuneCapacities()).reduce((s, v) => s + v, 0)
+    : getTotalCapacity(selectedEvent.capacity);
   const fillPercentage = totalCapacity > 0 ? (totalTickets / totalCapacity) * 100 : 0;
 
   // STVARNO PREOSTALO = Kapacitet - (Prodato + Gratis + Sve alokacije)
@@ -615,8 +629,78 @@ export default function CategoriesScreen() {
   const totalSavez = Object.values(savezByCategory).reduce((s, v) => s + v, 0);
   const totalIgraci = Object.values(igraciByCategory).reduce((s, v) => s + v, 0);
 
-  // GRUPISANE TRIBINE
-  const groupedStats = groupCategoryStatsByTribune(categoryStats, selectedEvent.capacityByCategory || {});
+  // ═══════════════════════════════════════════════════════════════
+  // SEKTORSKA STATISTIKA (za Gradski stadion)
+  // ═══════════════════════════════════════════════════════════════
+  const sectorStats: { tribune: string; sector: string; etickets: number; gratis: number; savez: number; igraci: number; total: number; capacity: number }[] = [];
+  if (isStadion) {
+    const sectorMap = new Map<string, SectorStat>();
+    const tribuneCaps = getTribuneCapacities();
+
+    // Inicijalizuj sve sektore iz kapaciteta
+    for (const [tribune, sectors] of Object.entries(GRADSKI_STADION_SECTORS)) {
+      for (const [sector, cap] of Object.entries(sectors)) {
+        const key = `${tribune}|${sector}`;
+        sectorMap.set(key, {
+          tribune,
+          sector,
+          etickets: 0,
+          gratis: 0,
+          savez: 0,
+          igraci: 0,
+          total: 0,
+          capacity: cap,
+        });
+      }
+    }
+
+    // Rasporedi karte po sektorima
+    allTickets.forEach((t: any) => {
+      const { tribune, sector } = extractSectorForTicket(t.category || "", t.seatId || "");
+      const key = `${tribune}|${sector}`;
+
+      if (!sectorMap.has(key)) {
+        // Sektor koji nije u kapacitetu - dodaj ga
+        sectorMap.set(key, {
+          tribune,
+          sector,
+          etickets: 0,
+          gratis: 0,
+          savez: 0,
+          igraci: 0,
+          total: 0,
+          capacity: 0,
+        });
+      }
+
+      const stat = sectorMap.get(key)!;
+      const ch = (t.salesChannel || "").trim();
+      const price = Number(t.price) || 0;
+
+      stat.total++;
+      if (ch === "Savez") stat.savez++;
+      else if (ch === "Igraci") stat.igraci++;
+      else if (price === 0) stat.gratis++;
+      else stat.etickets++;
+    });
+
+    sectorStats.push(...Array.from(sectorMap.values()));
+  }
+
+  // Grupiši sektore po tribini za prikaz
+  const tribuneOrder = ["Zapad", "Istok", "Sjever", "Jug", "VIP"];
+  const sectorsByTribune = tribuneOrder
+    .map((trib) => ({
+      tribune: trib,
+      sectors: sectorStats
+        .filter((s) => s.tribune === trib)
+        .sort((a, b) => a.sector.localeCompare(b.sector)),
+    }))
+    .filter((g) => g.sectors.length > 0);
+
+  // GRUPISANE TRIBINE - koristi hardkodirani kapacitet za stadion
+  const stadionCapacityByCategory = isStadion ? getTribuneCapacities() : (selectedEvent.capacityByCategory || {});
+  const groupedStats = groupCategoryStatsByTribune(categoryStats, stadionCapacityByCategory);
 
   const chartData = groupedStats.map((g, idx) => ({
     name: g.group,
@@ -644,7 +728,7 @@ export default function CategoriesScreen() {
           </CardContent>
         </Card>
 
-        <Card className="border-l-4 border-l-purple-500">
+        <Card className="border-l-4 border-l-slate-500">
           <CardContent className="p-3 text-center">
             <Gift className="w-5 h-5 mx-auto mb-1 text-purple-500" />
             <p className="text-lg font-bold">{totalGratis}</p>
@@ -707,10 +791,10 @@ export default function CategoriesScreen() {
 
       {/* GRATIS KARTE PO KATEGORIJAMA */}
       {totalGratis > 0 && (
-        <Card className="border-l-4 border-l-purple-500">
+        <Card className="border-l-4 border-l-slate-500">
           <CardHeader className="pb-2">
             <CardTitle className="text-sm flex items-center gap-2">
-              <Gift className="w-4 h-4 text-purple-600" />
+              <Gift className="w-4 h-4 text-slate-600" />
               Gratis Karte ({totalGratis})
               <span className="text-xs text-muted-foreground font-normal ml-2">besplatne ulaznice</span>
             </CardTitle>
@@ -720,10 +804,10 @@ export default function CategoriesScreen() {
               {gratisByCategory.map((g, idx) => (
                 <div
                   key={idx}
-                  className="flex items-center gap-2 px-3 py-1.5 rounded-full bg-purple-50 dark:bg-purple-500/10 border border-purple-200 dark:border-purple-500/30"
+                  className="flex items-center gap-2 px-3 py-1.5 rounded-full bg-slate-50 dark:bg-slate-500/10 border border-slate-200 dark:border-slate-500/30"
                 >
-                  <span className="text-xs text-purple-700 font-medium">{g.category}</span>
-                  <span className="text-xs font-bold text-purple-600 bg-purple-100 px-2 py-0.5 rounded-full">
+                  <span className="text-xs text-slate-700 font-medium">{g.category}</span>
+                  <span className="text-xs font-bold text-slate-600 bg-slate-100 px-2 py-0.5 rounded-full">
                     {g.count}
                     {g.tableCount > 0 && <span className="text-purple-400 font-normal ml-1">({g.tableCount} st.)</span>}
                   </span>
@@ -751,7 +835,7 @@ export default function CategoriesScreen() {
                     Tribina
                   </th>
                   <th className="px-2 py-2 text-right font-semibold bg-success/10">Prodato</th>
-                  <th className="px-2 py-2 text-right font-semibold bg-purple-50 dark:bg-purple-500/10">Gratis</th>
+                  <th className="px-2 py-2 text-right font-semibold bg-slate-50 dark:bg-slate-500/10">Gratis</th>
                   {totalSavez > 0 && (
                     <th className="px-2 py-2 text-right font-semibold bg-amber-50 dark:bg-amber-500/10">Savez</th>
                   )}
@@ -838,7 +922,7 @@ export default function CategoriesScreen() {
                         {g.count - gratisInGroup - savezInGroup - igraciInGroup}
                       </td>
 
-                      <td className="px-2 py-2 text-right font-medium text-purple-600 dark:text-purple-400 bg-purple-50 dark:bg-purple-500/10">
+                      <td className="px-2 py-2 text-right font-medium text-slate-600 dark:text-slate-400 bg-slate-50 dark:bg-slate-500/10">
                         {gratisInGroup || 0}
                       </td>
 
@@ -898,7 +982,7 @@ export default function CategoriesScreen() {
 
                   <td className="px-2 py-2 text-right text-success bg-success/10">{totalPaid - totalSavez - totalIgraci}</td>
 
-                  <td className="px-2 py-2 text-right text-purple-600 dark:text-purple-400 bg-purple-50 dark:bg-purple-500/10">{totalGratis}</td>
+                  <td className="px-2 py-2 text-right text-slate-600 dark:text-slate-400 bg-slate-50 dark:bg-slate-500/10">{totalGratis}</td>
 
                   {totalSavez > 0 && (
                     <td className="px-2 py-2 text-right text-amber-600 dark:text-amber-400 bg-amber-50 dark:bg-amber-500/10">{totalSavez}</td>
@@ -951,6 +1035,139 @@ export default function CategoriesScreen() {
           </div>
         </CardContent>
       </Card>
+
+      {/* STATISTIKA PO SEKTORIMA - samo za Gradski stadion */}
+      {isStadion && sectorsByTribune.length > 0 && (
+        <Card className="md:shadow-md">
+          <CardHeader className="pb-2">
+            <CardTitle className="text-sm flex items-center gap-2">
+              <Target className="w-4 h-4" />
+              Statistika po Sektorima
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="p-0">
+            <div className="overflow-x-auto">
+              <table className="w-full text-xs">
+                <thead>
+                  <tr className="border-b bg-gray-100 dark:bg-gray-800">
+                    <th className="sticky left-0 z-10 bg-gray-100 dark:bg-gray-800 px-2 py-2 text-left font-semibold min-w-[140px] border-r shadow-[2px_0_4px_-2px_rgba(0,0,0,0.15)]">
+                      Sektor
+                    </th>
+                    <th className="px-2 py-2 text-right font-semibold bg-success/10">eTickets</th>
+                    <th className="px-2 py-2 text-right font-semibold bg-slate-50 dark:bg-slate-500/10">Gratis</th>
+                    <th className="px-2 py-2 text-right font-semibold bg-amber-50 dark:bg-amber-500/10">Savez</th>
+                    <th className="px-2 py-2 text-right font-semibold bg-cyan-50 dark:bg-cyan-500/10">Igrači</th>
+                    <th className="px-2 py-2 text-right font-semibold">Ukupno</th>
+                    <th className="px-2 py-2 text-right font-semibold">Kap.</th>
+                    <th className="px-2 py-2 text-right font-semibold bg-green-50 dark:bg-green-500/10">Slobodno</th>
+                    <th className="px-2 py-2 text-right font-semibold">%</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {sectorsByTribune.map((group) => {
+                    const tribTotals = group.sectors.reduce(
+                      (acc, s) => ({
+                        etickets: acc.etickets + s.etickets,
+                        gratis: acc.gratis + s.gratis,
+                        savez: acc.savez + s.savez,
+                        igraci: acc.igraci + s.igraci,
+                        total: acc.total + s.total,
+                        capacity: acc.capacity + s.capacity,
+                      }),
+                      { etickets: 0, gratis: 0, savez: 0, igraci: 0, total: 0, capacity: 0 },
+                    );
+                    const tribColor = getCategoryColor(group.tribune, 0);
+                    const tribFree = Math.max(0, tribTotals.capacity - tribTotals.total);
+                    const tribPct = tribTotals.capacity > 0 ? ((tribTotals.total / tribTotals.capacity) * 100).toFixed(1) : "0.0";
+
+                    return (
+                      <React.Fragment key={group.tribune}>
+                        {/* Tribune header row */}
+                        <tr className="bg-muted/60 border-t-2">
+                          <td
+                            className="sticky left-0 z-10 bg-gray-200 dark:bg-gray-700 px-2 py-2 font-bold border-r shadow-[2px_0_4px_-2px_rgba(0,0,0,0.15)]"
+                          >
+                            <span
+                              className="px-2 py-0.5 rounded text-[10px] font-bold border"
+                              style={{ borderColor: tribColor, color: tribColor }}
+                            >
+                              {group.tribune}
+                            </span>
+                          </td>
+                          <td className="px-2 py-2 text-right font-bold text-success bg-success/10">{tribTotals.etickets}</td>
+                          <td className="px-2 py-2 text-right font-bold text-slate-600 bg-slate-50 dark:bg-slate-500/10">{tribTotals.gratis}</td>
+                          <td className="px-2 py-2 text-right font-bold text-amber-600 bg-amber-50 dark:bg-amber-500/10">{tribTotals.savez}</td>
+                          <td className="px-2 py-2 text-right font-bold text-cyan-600 bg-cyan-50 dark:bg-cyan-500/10">{tribTotals.igraci}</td>
+                          <td className="px-2 py-2 text-right font-bold">{tribTotals.total}</td>
+                          <td className="px-2 py-2 text-right font-bold text-muted-foreground">{tribTotals.capacity}</td>
+                          <td className="px-2 py-2 text-right font-bold text-green-600 bg-green-50 dark:bg-green-500/10">{tribFree}</td>
+                          <td className="px-2 py-2 text-right font-bold">{tribPct}%</td>
+                        </tr>
+                        {/* Sector rows */}
+                        {group.sectors.map((s, sIdx) => {
+                          const free = Math.max(0, s.capacity - s.total);
+                          const pct = s.capacity > 0 ? ((s.total / s.capacity) * 100).toFixed(1) : "-";
+                          return (
+                            <tr
+                              key={`${s.tribune}-${s.sector}`}
+                              className={sIdx % 2 === 0 ? "bg-card" : "bg-muted/20"}
+                            >
+                              <td
+                                className={`sticky left-0 z-10 px-2 py-1.5 pl-6 border-r shadow-[2px_0_4px_-2px_rgba(0,0,0,0.15)] text-muted-foreground ${
+                                  sIdx % 2 === 0 ? "bg-white dark:bg-gray-900" : "bg-gray-50 dark:bg-gray-800"
+                                }`}
+                              >
+                                Sektor: {s.sector}
+                              </td>
+                              <td className="px-2 py-1.5 text-right text-success bg-success/5">{s.etickets || "-"}</td>
+                              <td className="px-2 py-1.5 text-right text-slate-600 bg-purple-50/50 dark:bg-purple-500/5">{s.gratis || "-"}</td>
+                              <td className="px-2 py-1.5 text-right text-amber-600 bg-amber-50/50 dark:bg-amber-500/5">{s.savez || "-"}</td>
+                              <td className="px-2 py-1.5 text-right text-cyan-600 bg-cyan-50/50 dark:bg-cyan-500/5">{s.igraci || "-"}</td>
+                              <td className="px-2 py-1.5 text-right font-medium">{s.total || "-"}</td>
+                              <td className="px-2 py-1.5 text-right text-muted-foreground">{s.capacity || "-"}</td>
+                              <td className="px-2 py-1.5 text-right text-green-600 bg-green-50/50 dark:bg-green-500/5">{free}</td>
+                              <td className="px-2 py-1.5 text-right text-muted-foreground">{pct === "-" ? "-" : `${pct}%`}</td>
+                            </tr>
+                          );
+                        })}
+                      </React.Fragment>
+                    );
+                  })}
+                </tbody>
+                <tfoot>
+                  <tr className="border-t-2 bg-muted font-bold">
+                    <td className="sticky left-0 z-10 bg-gray-200 dark:bg-gray-700 px-2 py-2 border-r shadow-[2px_0_4px_-2px_rgba(0,0,0,0.15)]">
+                      UKUPNO
+                    </td>
+                    <td className="px-2 py-2 text-right text-success bg-success/10">
+                      {sectorStats.reduce((s, x) => s + x.etickets, 0)}
+                    </td>
+                    <td className="px-2 py-2 text-right text-slate-600 bg-slate-50 dark:bg-slate-500/10">
+                      {sectorStats.reduce((s, x) => s + x.gratis, 0)}
+                    </td>
+                    <td className="px-2 py-2 text-right text-amber-600 bg-amber-50 dark:bg-amber-500/10">
+                      {sectorStats.reduce((s, x) => s + x.savez, 0)}
+                    </td>
+                    <td className="px-2 py-2 text-right text-cyan-600 bg-cyan-50 dark:bg-cyan-500/10">
+                      {sectorStats.reduce((s, x) => s + x.igraci, 0)}
+                    </td>
+                    <td className="px-2 py-2 text-right">
+                      {sectorStats.reduce((s, x) => s + x.total, 0)}
+                    </td>
+                    <td className="px-2 py-2 text-right">{totalCapacity}</td>
+                    <td className="px-2 py-2 text-right text-green-600 bg-green-50 dark:bg-green-500/10">
+                      {Math.max(0, totalCapacity - sectorStats.reduce((s, x) => s + x.total, 0))}
+                    </td>
+                    <td className="px-2 py-2 text-right">
+                      {totalCapacity > 0 ? ((sectorStats.reduce((s, x) => s + x.total, 0) / totalCapacity) * 100).toFixed(1) : "0.0"}%
+                    </td>
+                  </tr>
+                </tfoot>
+              </table>
+            </div>
+          </CardContent>
+        </Card>
+      )}
 
       {/* Main content grid - Chart and Categories side by side on desktop */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-3 md:gap-4">
@@ -1220,9 +1437,9 @@ export default function CategoriesScreen() {
                         <p className="text-xl font-bold text-success">{g.count - gratisInGroup - savezInGrp - igraciInGrp}</p>
                         <p className="text-[10px] text-muted-foreground">eTickets</p>
                       </div>
-                      <div className="bg-purple-50 dark:bg-purple-500/10 rounded-lg p-3 text-center">
-                        <Gift className="w-5 h-5 mx-auto mb-1 text-purple-600" />
-                        <p className="text-xl font-bold text-purple-600">{gratisInGroup}</p>
+                      <div className="bg-slate-50 dark:bg-slate-500/10 rounded-lg p-3 text-center">
+                        <Gift className="w-5 h-5 mx-auto mb-1 text-slate-600" />
+                        <p className="text-xl font-bold text-slate-600">{gratisInGroup}</p>
                         <p className="text-[10px] text-muted-foreground">Gratis</p>
                       </div>
                       <div className="bg-green-50 dark:bg-green-500/10 rounded-lg p-3 text-center">

@@ -173,6 +173,8 @@ function normalizeSalesChannel(ch: string | null): string {
   if (c.includes("gotovina") || c.includes("biletarnica")) return "Biletarnica";
   if (c.includes("virman") || c.includes("bank") || c.includes("transfer")) return "Virman";
   if (c.includes("kartica")) return "Online-Kartica";
+  if (c === "savez") return "Savez";
+  if (c === "igraci") return "Igraci";
   return "Online";
 }
 
@@ -182,6 +184,10 @@ function isHidden(t: any): boolean {
 function isReservation(t: any): boolean {
   const c = (t.salesChannel || "").toLowerCase();
   return c === "rezervacija" || c.includes("bukiranje");
+}
+function isExcludedChannel(t: any): boolean {
+  const c = (t.salesChannel || "").toLowerCase();
+  return c === "savez" || c === "igraci";
 }
 function formatCurrency(a: number, c: string = "EUR"): string {
   return new Intl.NumberFormat("de-DE", { style: "currency", currency: c }).format(a);
@@ -406,7 +412,7 @@ export default function AdminDashboard({ onSwitchToOrganizer }: Props) {
         const perTicket = currency === "RSD" ? 35 : 0.3;
 
         const hidden = tickets.filter(isHidden);
-        const visible = tickets.filter((t: any) => !isHidden(t) && !isReservation(t) && t.status !== "refunded");
+        const visible = tickets.filter((t: any) => !isHidden(t) && !isReservation(t) && !isExcludedChannel(t) && t.status !== "refunded");
         const gratis = visible.filter((t: any) => parseFloat(t.price || "0") === 0);
         const paid = visible.filter((t: any) => parseFloat(t.price || "0") > 0);
 

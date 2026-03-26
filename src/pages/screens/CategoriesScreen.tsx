@@ -603,6 +603,18 @@ export default function CategoriesScreen() {
 
   const currency = selectedEvent.currency;
 
+  // Savez i Igraci karte po kategorijama
+  const savezByCategory: Record<string, number> = {};
+  const igraciByCategory: Record<string, number> = {};
+  allTickets.forEach((t) => {
+    const ch = (t.salesChannel || "").trim();
+    const cat = t.category || "Ostalo";
+    if (ch === "Savez") savezByCategory[cat] = (savezByCategory[cat] || 0) + 1;
+    if (ch === "Igraci") igraciByCategory[cat] = (igraciByCategory[cat] || 0) + 1;
+  });
+  const totalSavez = Object.values(savezByCategory).reduce((s, v) => s + v, 0);
+  const totalIgraci = Object.values(igraciByCategory).reduce((s, v) => s + v, 0);
+
   // GRUPISANE TRIBINE
   const groupedStats = groupCategoryStatsByTribune(categoryStats, selectedEvent.capacityByCategory || {});
 
@@ -740,6 +752,12 @@ export default function CategoriesScreen() {
                   </th>
                   <th className="px-2 py-2 text-right font-semibold bg-success/10">Prodato</th>
                   <th className="px-2 py-2 text-right font-semibold bg-purple-50 dark:bg-purple-500/10">Gratis</th>
+                  {totalSavez > 0 && (
+                    <th className="px-2 py-2 text-right font-semibold bg-amber-50 dark:bg-amber-500/10">Savez</th>
+                  )}
+                  {totalIgraci > 0 && (
+                    <th className="px-2 py-2 text-right font-semibold bg-cyan-50 dark:bg-cyan-500/10">Igrači</th>
+                  )}
 
                   {/* DINAMIČKE KOLONE ZA EKSTERNE KANALE IZ BAZE */}
                   {Object.keys(allocationSummary.byChannel)
@@ -771,6 +789,9 @@ export default function CategoriesScreen() {
                   const gratisInGroup = gratisByCategory
                     .filter((gr) => g.subcategories.includes(gr.category))
                     .reduce((sum, gr) => sum + gr.count, 0);
+                  // Saberi Savez i Igraci iz svih potkategorija
+                  const savezInGroup = g.subcategories.reduce((sum, sub) => sum + (savezByCategory[sub] || 0), 0);
+                  const igraciInGroup = g.subcategories.reduce((sum, sub) => sum + (igraciByCategory[sub] || 0), 0);
                   // Saberi alokacije iz svih potkategorija
                   const groupAllocTotal = g.subcategories.reduce((sum, sub) => {
                     return sum + calculateCategoryAllocations(allocations, sub).total;
@@ -814,12 +835,23 @@ export default function CategoriesScreen() {
                       </td>
 
                       <td className="px-2 py-2 text-right font-semibold text-success bg-success/5">
-                        {g.count - gratisInGroup}
+                        {g.count - gratisInGroup - savezInGroup - igraciInGroup}
                       </td>
 
                       <td className="px-2 py-2 text-right font-medium text-purple-600 dark:text-purple-400 bg-purple-50 dark:bg-purple-500/10">
                         {gratisInGroup || 0}
                       </td>
+
+                      {totalSavez > 0 && (
+                        <td className="px-2 py-2 text-right font-medium text-amber-600 dark:text-amber-400 bg-amber-50 dark:bg-amber-500/10">
+                          {savezInGroup || "-"}
+                        </td>
+                      )}
+                      {totalIgraci > 0 && (
+                        <td className="px-2 py-2 text-right font-medium text-cyan-600 dark:text-cyan-400 bg-cyan-50 dark:bg-cyan-500/10">
+                          {igraciInGroup || "-"}
+                        </td>
+                      )}
 
                       {Object.keys(allocationSummary.byChannel)
                         .sort()
@@ -864,9 +896,16 @@ export default function CategoriesScreen() {
                     UKUPNO
                   </td>
 
-                  <td className="px-2 py-2 text-right text-success bg-success/10">{totalPaid}</td>
+                  <td className="px-2 py-2 text-right text-success bg-success/10">{totalPaid - totalSavez - totalIgraci}</td>
 
                   <td className="px-2 py-2 text-right text-purple-600 dark:text-purple-400 bg-purple-50 dark:bg-purple-500/10">{totalGratis}</td>
+
+                  {totalSavez > 0 && (
+                    <td className="px-2 py-2 text-right text-amber-600 dark:text-amber-400 bg-amber-50 dark:bg-amber-500/10">{totalSavez}</td>
+                  )}
+                  {totalIgraci > 0 && (
+                    <td className="px-2 py-2 text-right text-cyan-600 dark:text-cyan-400 bg-cyan-50 dark:bg-cyan-500/10">{totalIgraci}</td>
+                  )}
 
                   {/* UKUPNO PO KANALIMA */}
                   {Object.entries(allocationSummary.byChannel)
@@ -1150,6 +1189,8 @@ export default function CategoriesScreen() {
               const gratisInGroup = gratisByCategory
                 .filter((gr) => g.subcategories.includes(gr.category))
                 .reduce((sum, gr) => sum + gr.count, 0);
+              const savezInGrp = g.subcategories.reduce((sum, sub) => sum + (savezByCategory[sub] || 0), 0);
+              const igraciInGrp = g.subcategories.reduce((sum, sub) => sum + (igraciByCategory[sub] || 0), 0);
               const groupAllocTotal = g.subcategories.reduce((sum, sub) => {
                 return sum + calculateCategoryAllocations(allocations, sub).total;
               }, 0);
@@ -1173,21 +1214,16 @@ export default function CategoriesScreen() {
                   </DrawerHeader>
 
                   <div className="px-4 pb-6 space-y-4">
-                    <div className="grid grid-cols-4 gap-2">
+                    <div className="grid grid-cols-3 gap-2">
                       <div className="bg-success/10 rounded-lg p-3 text-center">
                         <Ticket className="w-5 h-5 mx-auto mb-1 text-success" />
-                        <p className="text-xl font-bold text-success">{g.count - gratisInGroup}</p>
-                        <p className="text-[10px] text-muted-foreground">Prodato</p>
+                        <p className="text-xl font-bold text-success">{g.count - gratisInGroup - savezInGrp - igraciInGrp}</p>
+                        <p className="text-[10px] text-muted-foreground">eTickets</p>
                       </div>
                       <div className="bg-purple-50 dark:bg-purple-500/10 rounded-lg p-3 text-center">
                         <Gift className="w-5 h-5 mx-auto mb-1 text-purple-600" />
                         <p className="text-xl font-bold text-purple-600">{gratisInGroup}</p>
                         <p className="text-[10px] text-muted-foreground">Gratis</p>
-                      </div>
-                      <div className="bg-slate-100 rounded-lg p-3 text-center dark:bg-slate-800/50">
-                        <ExternalLink className="w-5 h-5 mx-auto mb-1 text-slate-500" />
-                        <p className="text-xl font-bold text-slate-600 dark:text-slate-400">{groupAllocTotal}</p>
-                        <p className="text-[10px] text-muted-foreground">Alocir.</p>
                       </div>
                       <div className="bg-green-50 dark:bg-green-500/10 rounded-lg p-3 text-center">
                         <Target className="w-5 h-5 mx-auto mb-1 text-green-600" />
@@ -1195,6 +1231,31 @@ export default function CategoriesScreen() {
                         <p className="text-[10px] text-muted-foreground">Slobodno</p>
                       </div>
                     </div>
+                    {(savezInGrp > 0 || igraciInGrp > 0 || groupAllocTotal > 0) && (
+                      <div className="grid grid-cols-3 gap-2">
+                        {savezInGrp > 0 && (
+                          <div className="bg-amber-50 dark:bg-amber-500/10 rounded-lg p-3 text-center">
+                            <Building2 className="w-5 h-5 mx-auto mb-1 text-amber-600" />
+                            <p className="text-xl font-bold text-amber-600">{savezInGrp}</p>
+                            <p className="text-[10px] text-muted-foreground">Savez</p>
+                          </div>
+                        )}
+                        {igraciInGrp > 0 && (
+                          <div className="bg-cyan-50 dark:bg-cyan-500/10 rounded-lg p-3 text-center">
+                            <Users className="w-5 h-5 mx-auto mb-1 text-cyan-600" />
+                            <p className="text-xl font-bold text-cyan-600">{igraciInGrp}</p>
+                            <p className="text-[10px] text-muted-foreground">Igrači</p>
+                          </div>
+                        )}
+                        {groupAllocTotal > 0 && (
+                          <div className="bg-slate-100 rounded-lg p-3 text-center dark:bg-slate-800/50">
+                            <ExternalLink className="w-5 h-5 mx-auto mb-1 text-slate-500" />
+                            <p className="text-xl font-bold text-slate-600 dark:text-slate-400">{groupAllocTotal}</p>
+                            <p className="text-[10px] text-muted-foreground">Alocir.</p>
+                          </div>
+                        )}
+                      </div>
+                    )}
 
                     {/* Potkategorije - detalji */}
                     {g.subcategories.length > 1 && (

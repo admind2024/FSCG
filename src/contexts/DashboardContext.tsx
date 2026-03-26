@@ -92,6 +92,8 @@ function normalizeSalesChannel(channel: string | null): string {
   if (ch.includes("biletarnica")) return "Biletarnica";
   if (ch.includes("virman") || ch.includes("bank") || ch.includes("transfer")) return "Virman";
   if (ch.includes("kartica")) return "Online-Kartica";
+  if (ch === "savez") return "Savez";
+  if (ch === "igraci") return "Igraci";
   if (ch === "website" || ch === "online") return "Online";
 
   return "Online";
@@ -108,6 +110,11 @@ function isTicketHidden(ticket: any): boolean {
 function isReservation(ticket: any): boolean {
   const channel = (ticket.salesChannel || "").toLowerCase();
   return channel === "rezervacija" || channel.includes("bukiranje");
+}
+
+function isExcludedChannel(ticket: any): boolean {
+  const channel = (ticket.salesChannel || "").toLowerCase();
+  return channel === "savez" || channel === "igraci";
 }
 
 function calculateFees(
@@ -619,6 +626,7 @@ export function DashboardProvider({ children }: { children: React.ReactNode }) {
         const visibleTickets = ticketsAfterSkipRate.filter((t: any) => {
           if (isTicketHidden(t)) return false;
           if (isReservation(t)) return false;
+          if (isExcludedChannel(t)) return false;
           if (t.status === "refunded") return false;
           return true;
         });

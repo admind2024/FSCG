@@ -23,6 +23,8 @@ export function normalizeSalesChannel(channel: string | null | undefined): strin
   if (ch.includes("biletarnica")) return "Biletarnica";
   if (ch.includes("virman") || ch.includes("bank") || ch.includes("transfer")) return "Virman";
   if (ch.includes("kartica")) return "Online-Kartica";
+  if (ch === "savez") return "Savez";
+  if (ch === "igraci") return "Igraci";
   if (ch === "website" || ch === "online") return "Online";
 
   return "Online";
@@ -39,9 +41,15 @@ export function isTicketHidden(ticket: any): boolean {
   return false;
 }
 
+export function isExcludedChannel(ticket: any): boolean {
+  const channel = (ticket.salesChannel || "").toLowerCase();
+  return channel === "savez" || channel === "igraci";
+}
+
 export function filterVisibleTickets(tickets: Ticket[]): Ticket[] {
   return tickets.filter((ticket) => {
     if (isTicketHidden(ticket)) return false;
+    if (isExcludedChannel(ticket)) return false;
     if ((ticket as any).status === "refunded") return false;
     return true;
   });

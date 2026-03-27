@@ -11,8 +11,11 @@ export default function DailyScreen() {
     return <LoadingSkeleton />;
   }
 
+  // Samo plaćene karte (pazar) - bez gratis
+  const paidTickets = selectedEvent.tickets.filter((t) => Number(t.price) > 0);
+
   // Sortiraj od najnovijeg ka najstarijem
-  const dailyStats = calculateDailyStats(selectedEvent.tickets, selectedEvent).sort(
+  const dailyStats = calculateDailyStats(paidTickets, selectedEvent).sort(
     (a, b) => new Date(b.date).getTime() - new Date(a.date).getTime(),
   );
 
@@ -94,7 +97,7 @@ export default function DailyScreen() {
                       <td
                         className={`
                         sticky left-0 z-10 px-3 py-2.5 font-medium border-r shadow-[2px_0_4px_-2px_rgba(0,0,0,0.15)]
-                        ${isTodayRow ? "bg-blue-50 dark:bg-blue-950" : isYesterdayRow ? "bg-gray-100 dark:bg-gray-800" : idx % 2 === 0 ? "bg-white dark:bg-gray-900" : "bg-gray-50 dark:bg-gray-850"}
+                        ${isTodayRow ? "bg-blue-50 dark:bg-blue-950" : isYesterdayRow ? "bg-gray-100 dark:bg-gray-800" : idx % 2 === 0 ? "bg-card" : "bg-gray-50 dark:bg-gray-800"}
                       `}
                       >
                         <div className="flex items-center gap-1.5">

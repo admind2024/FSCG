@@ -443,7 +443,7 @@ export default function AdminDashboard({ onSwitchToOrganizer }: Props) {
           totalRevenue += price;
 
           let feeP =
-            ch === "Biletarnica" || ch === "Online-Kartica" ? biletFee : ch === "Virman" ? virmanFee : serviceFee;
+            ch === "Biletarnica" || ch === "Online-Kartica" ? biletFee : ch === "Virman" ? (virmanFee || serviceFee) : serviceFee;
           const fee = (price * feeP) / 100;
           const pdv = (fee * pdvPct) / 100;
           let ticketFee = fee + pdv;

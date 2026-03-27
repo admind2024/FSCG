@@ -244,7 +244,7 @@ export function calculateFees(
   if (normalizedChannel === "Biletarnica") {
     actualFeePercentage = biletarnicaFee;
   } else if (normalizedChannel === "Virman") {
-    actualFeePercentage = virmanFee;
+    actualFeePercentage = virmanFee || serviceFeePercentage;
   } else if (normalizedChannel === "Online-Kartica") {
     actualFeePercentage = biletarnicaFee;
   } else {
@@ -300,7 +300,7 @@ export function calculateDailyStats(tickets: Ticket[], eventData?: any): DailySt
     if (channel === "Biletarnica" || channel === "Online-Kartica") {
       feePercent = biletarnicaFee;
     } else if (channel === "Virman") {
-      feePercent = virmanFee;
+      feePercent = virmanFee || serviceFeePercentage;
     }
     const fee = ((price * feePercent) / 100) * (1 + pdvPercentage / 100);
 

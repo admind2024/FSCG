@@ -144,7 +144,7 @@ function calculateFees(
   if (normalizedChannel === "Biletarnica") {
     actualFeePercentage = biletarnicaFee;
   } else if (normalizedChannel === "Virman") {
-    actualFeePercentage = virmanFee;
+    actualFeePercentage = virmanFee || serviceFeePercentage;
   } else if (normalizedChannel === "Online-Kartica") {
     actualFeePercentage = biletarnicaFee;
   } else {

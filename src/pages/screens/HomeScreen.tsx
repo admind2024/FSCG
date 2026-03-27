@@ -218,12 +218,13 @@ export default function HomeScreen() {
     totalFee: biletarnicaServiceFee + biletarnicaPdvOnFee,
   };
 
-  const virmanServiceFee = channelTotals.virman.amount * (selectedEvent.virmanFee / 100);
+  const effectiveVirmanFee = selectedEvent.virmanFee || selectedEvent.serviceFeePercentage;
+  const virmanServiceFee = channelTotals.virman.amount * (effectiveVirmanFee / 100);
   const virmanPdvOnFee = virmanServiceFee * (pdvPercentFee / 100);
   const virmanBreakdown: ChannelBreakdown = {
     count: channelTotals.virman.count,
     amount: channelTotals.virman.amount,
-    feePercent: selectedEvent.virmanFee,
+    feePercent: effectiveVirmanFee,
     pdvPercent: pdvPercentFee,
     serviceFee: virmanServiceFee,
     pdvOnFee: virmanPdvOnFee,

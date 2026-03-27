@@ -149,9 +149,10 @@ export async function loadEventData(eventId: string): Promise<EventData | null> 
       // Skip reservations from main list
       const channel = (t.salesChannel || "").toLowerCase();
       if (channel === "rezervacija" || channel.includes("bukiranje")) return false;
-      // Exclude Savez/Igraci channels AND biletarnica tickets with customerName "IGRACI"
+      // Exclude Savez/Igraci channels, customerName "IGRACI", and "Nedostupno" category
       if (channel === "savez" || channel === "igraci") return false;
       if ((t.customerName || "").trim().toUpperCase() === "IGRACI") return false;
+      if ((t.category || "").toLowerCase() === "nedostupno") return false;
       return true;
     });
 

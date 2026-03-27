@@ -49,6 +49,9 @@ export function isExcludedChannel(ticket: any): boolean {
   // Igrači karte unijete kroz biletarnicu (customerName = "IGRACI")
   const name = (ticket.customerName || "").trim().toUpperCase();
   if (name === "IGRACI") return true;
+  // "Nedostupno" kategorija = savez/interne karte, ne prava prodaja
+  const category = (ticket.category || "").toLowerCase();
+  if (category === "nedostupno") return true;
   return false;
 }
 

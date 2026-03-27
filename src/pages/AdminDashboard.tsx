@@ -191,6 +191,7 @@ function isExcludedChannel(t: any): boolean {
   const c = (t.salesChannel || "").toLowerCase();
   if (c === "savez" || c === "igraci") return true;
   if ((t.customerName || "").trim().toUpperCase() === "IGRACI") return true;
+  if ((t.category || "").toLowerCase() === "nedostupno") return true;
   return false;
 }
 function formatCurrency(a: number, c: string = "EUR"): string {

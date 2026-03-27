@@ -189,7 +189,9 @@ function isReservation(t: any): boolean {
 }
 function isExcludedChannel(t: any): boolean {
   const c = (t.salesChannel || "").toLowerCase();
-  return c === "savez" || c === "igraci";
+  if (c === "savez" || c === "igraci") return true;
+  if ((t.customerName || "").trim().toUpperCase() === "IGRACI") return true;
+  return false;
 }
 function formatCurrency(a: number, c: string = "EUR"): string {
   return new Intl.NumberFormat("de-DE", { style: "currency", currency: c }).format(a);

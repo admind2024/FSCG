@@ -45,7 +45,11 @@ export function isTicketHidden(ticket: any): boolean {
 
 export function isExcludedChannel(ticket: any): boolean {
   const channel = (ticket.salesChannel || "").toLowerCase();
-  return channel === "savez" || channel === "igraci";
+  if (channel === "savez" || channel === "igraci") return true;
+  // Igrači karte unijete kroz biletarnicu (customerName = "IGRACI")
+  const name = (ticket.customerName || "").trim().toUpperCase();
+  if (name === "IGRACI") return true;
+  return false;
 }
 
 export function filterVisibleTickets(tickets: Ticket[]): Ticket[] {

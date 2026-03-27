@@ -170,7 +170,9 @@ async function fetchDeductions(eventId: string): Promise<Deduction[]> {
 function normalizeSalesChannel(ch: string | null): string {
   if (!ch) return "Online";
   const c = ch.trim().toLowerCase();
-  if (c.includes("gotovina") || c.includes("biletarnica")) return "Biletarnica";
+  if (c.includes("gotovina")) return "Biletarnica";
+  if (c === "online-biletarnica") return "Online";
+  if (c.includes("biletarnica")) return "Biletarnica";
   if (c.includes("virman") || c.includes("bank") || c.includes("transfer")) return "Virman";
   if (c.includes("kartica")) return "Online-Kartica";
   if (c === "savez") return "Savez";

@@ -89,6 +89,7 @@ function normalizeSalesChannel(channel: string | null): string {
   const ch = channel.trim().toLowerCase();
 
   if (ch.includes("gotovina")) return "Biletarnica";
+  if (ch === "online-biletarnica") return "Online";
   if (ch.includes("biletarnica")) return "Biletarnica";
   if (ch.includes("virman") || ch.includes("bank") || ch.includes("transfer")) return "Virman";
   if (ch.includes("kartica")) return "Online-Kartica";

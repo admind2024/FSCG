@@ -58,7 +58,6 @@ export function isExcludedChannel(ticket: any): boolean {
 export function filterVisibleTickets(tickets: Ticket[]): Ticket[] {
   return tickets.filter((ticket) => {
     if (isTicketHidden(ticket)) return false;
-    if (isExcludedChannel(ticket)) return false;
     if ((ticket as any).status === "refunded") return false;
     return true;
   });
@@ -295,31 +294,37 @@ export function calculateDailyStats(tickets: Ticket[], eventData?: any): DailySt
     const channel = normalizeSalesChannel(ticket.salesChannel);
     const price = Number(ticket.price) || 0;
 
-    // Calculate fee for this ticket
-    let feePercent = serviceFeePercentage;
-    if (channel === "Biletarnica" || channel === "Online-Kartica") {
-      feePercent = biletarnicaFee;
-    } else if (channel === "Virman") {
-      feePercent = virmanFee || serviceFeePercentage;
-    }
-    const fee = ((price * feePercent) / 100) * (1 + pdvPercentage / 100);
-
     stats.total++;
-    stats.totalAmount += price;
 
-    // Update channel stats
-    const channelKey =
-      channel === "Online"
-        ? "online"
-        : channel === "Biletarnica"
-          ? "biletarnica"
-          : channel === "Virman"
-            ? "virman"
-            : "kartica";
+    // Savez/Igraci i gratis ne ulaze u kanale ni iznos
+    if (channel === "Savez" || channel === "Igraci" || price === 0) {
+      // Ne broji u amount ni u kanale
+    } else {
+      // Calculate fee for this ticket
+      let feePercent = serviceFeePercentage;
+      if (channel === "Biletarnica" || channel === "Online-Kartica") {
+        feePercent = biletarnicaFee;
+      } else if (channel === "Virman") {
+        feePercent = virmanFee || serviceFeePercentage;
+      }
+      const fee = ((price * feePercent) / 100) * (1 + pdvPercentage / 100);
 
-    stats[channelKey].count++;
-    stats[channelKey].amount += price;
-    stats[channelKey].fees += fee;
+      stats.totalAmount += price;
+
+      // Update channel stats
+      const channelKey =
+        channel === "Online"
+          ? "online"
+          : channel === "Biletarnica"
+            ? "biletarnica"
+            : channel === "Virman"
+              ? "virman"
+              : "kartica";
+
+      stats[channelKey].count++;
+      stats[channelKey].amount += price;
+      stats[channelKey].fees += fee;
+    }
   });
 
   // Sort by date
@@ -381,14 +386,20 @@ export function calculateCategoryStats(
     const price = Number(ticket.price) || 0;
 
     stats.count++;
-    stats.amount += price;
     totalCount++;
-    totalAmount += price;
 
-    if (channel === "Online") stats.online++;
-    else if (channel === "Biletarnica") stats.biletarnica++;
-    else if (channel === "Virman") stats.virman++;
-    else stats.kartica++;
+    // Savez/Igraci i gratis (price=0) ne ulaze u kanale prodaje ni iznos
+    if (channel === "Savez" || channel === "Igraci" || price === 0) {
+      // Ne broji u amount ni u kanale
+    } else {
+      stats.amount += price;
+      totalAmount += price;
+
+      if (channel === "Online") stats.online++;
+      else if (channel === "Biletarnica") stats.biletarnica++;
+      else if (channel === "Virman") stats.virman++;
+      else stats.kartica++;
+    }
   });
 
   const result: CategoryStats[] = [];
@@ -490,12 +501,18 @@ export function calculateDailyCategoryStats(
     const price = Number(ticket.price) || 0;
 
     stats.total++;
-    stats.amount += price;
 
-    if (channel === "Online") stats.online++;
-    else if (channel === "Biletarnica") stats.biletarnica++;
-    else if (channel === "Virman") stats.virman++;
-    else stats.kartica++;
+    // Savez/Igraci i gratis ne ulaze u kanale ni iznos
+    if (channel === "Savez" || channel === "Igraci" || price === 0) {
+      // Ne broji u amount ni u kanale
+    } else {
+      stats.amount += price;
+
+      if (channel === "Online") stats.online++;
+      else if (channel === "Biletarnica") stats.biletarnica++;
+      else if (channel === "Virman") stats.virman++;
+      else stats.kartica++;
+    }
   });
 
   return Array.from(map.values()).sort((a, b) => {

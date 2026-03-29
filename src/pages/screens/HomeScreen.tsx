@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import { useDashboard, useAuth } from "@/contexts/DashboardContext";
 import { filterVisibleTickets, normalizeSalesChannel, getTotalCapacity, formatCurrency } from "@/lib/dashboard-utils";
+import { isGradskiStadion, getTribuneCapacities } from "@/lib/stadium-config";
 import { Deduction } from "@/types/dashboard";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
@@ -17,7 +18,7 @@ import {
   Receipt,
   CheckCircle2,
   Printer,
-  Gift,
+  Users,
 } from "lucide-react";
 import { Skeleton } from "@/components/ui/skeleton";
 import { AnimatedNumber } from "@/components/AnimatedNumber";
@@ -141,17 +142,33 @@ export default function HomeScreen() {
   }
 
   const tickets = filterVisibleTickets(selectedEvent.tickets);
-  const totalCapacity = getTotalCapacity(selectedEvent.capacity);
+  const venue = selectedEvent.venue || "";
+  const isStadion = isGradskiStadion(venue);
+  const totalCapacity = isStadion
+    ? Object.values(getTribuneCapacities()).reduce((s, v) => s + v, 0)
+    : getTotalCapacity(selectedEvent.capacity);
   const currency = selectedEvent.currency || "EUR";
 
   // ═══════════════════════════════════════════════════════════════
-  // GRATIS vs PLAĆENE KARTE
-  // Gratis karte (price = 0) se NE broje u "Ukupno prodato"
+  // PRODATO vs SAVEZ KARTE
+  // Savez = Savez/Igraci kanali + sve gratis (price=0)
+  // Prodato = samo naša plaćena prodaja
   // ═══════════════════════════════════════════════════════════════
-  const paidTickets = tickets.filter((t) => t.price > 0);
-  const gratisTickets = tickets.filter((t) => t.price === 0);
-  const totalSold = paidTickets.length; // Samo plaćene karte
-  const gratisCount = gratisTickets.length;
+  const savezIgraciTickets = (selectedEvent as any).savezIgraciTickets || [];
+  const paidTickets = tickets.filter((t) => {
+    const ch = (t.salesChannel || "").toLowerCase();
+    return t.price > 0 && ch !== "savez" && ch !== "igraci";
+  });
+  const savezCount = savezIgraciTickets.length + tickets.filter((t) => {
+    const ch = (t.salesChannel || "").toLowerCase();
+    return t.price === 0 && ch !== "savez" && ch !== "igraci";
+  }).length;
+  const savezGratis = savezIgraciTickets.filter((t: any) => Number(t.price) === 0).length + tickets.filter((t) => {
+    const ch = (t.salesChannel || "").toLowerCase();
+    return t.price === 0 && ch !== "savez" && ch !== "igraci";
+  }).length;
+  const savezPaid = savezCount - savezGratis;
+  const totalSold = paidTickets.length;
 
   const fillPercentage = totalCapacity > 0 ? (totalSold / totalCapacity) * 100 : 0;
 
@@ -330,22 +347,22 @@ export default function HomeScreen() {
             </div>
           </div>
 
-          {/* Gratis Karte - samo ako ima */}
-          {gratisCount > 0 && (
-            <Card className="bg-white dark:bg-card border border-gray-200 dark:border-border shadow-sm border-l-4 border-l-purple-500">
+          {/* Savez Karte - samo ako ima */}
+          {savezCount > 0 && (
+            <Card className="bg-white dark:bg-card border border-gray-200 dark:border-border shadow-sm border-l-4 border-l-amber-500">
               <CardContent className="p-3">
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-2">
-                    <div className="w-10 h-10 rounded-full bg-purple-100 dark:bg-purple-500/20 flex items-center justify-center">
-                      <Gift className="w-5 h-5 text-purple-600" />
+                    <div className="w-10 h-10 rounded-full bg-amber-100 dark:bg-amber-500/20 flex items-center justify-center">
+                      <Users className="w-5 h-5 text-amber-600" />
                     </div>
                     <div>
-                      <p className="text-xs text-gray-600 dark:text-muted-foreground font-medium">Gratis Karte</p>
-                      <p className="text-2xl font-bold text-purple-600">{gratisCount}</p>
+                      <p className="text-xs text-gray-600 dark:text-muted-foreground font-medium">Savez</p>
+                      <p className="text-2xl font-bold text-amber-600">{savezCount}</p>
                     </div>
                   </div>
                   <div className="text-right">
-                    <p className="text-xs text-gray-500 dark:text-muted-foreground">besplatne ulaznice</p>
+                    <p className="text-xs text-amber-600 font-medium">{savezGratis} gratis / {savezPaid} sa cijenom</p>
                     <p className="text-xs text-gray-400">ne ulaze u prodaju</p>
                   </div>
                 </div>
@@ -629,7 +646,7 @@ export default function HomeScreen() {
                   <td>Ukupna prodaja (${totalSold} karata)</td>
                   <td class="right bold">${formatCurrency(totalRevenue, currency, null, false)}</td>
                 </tr>
-                ${gratisCount > 0 ? `<tr class="gratis-row"><td>Gratis karte (besplatne)</td><td class="right purple">${gratisCount} kom</td></tr>` : ""}
+                ${savezCount > 0 ? `<tr class="gratis-row"><td>Savez karte (${savezGratis} gratis / ${savezPaid} sa cijenom)</td><td class="right purple">${savezCount} kom</td></tr>` : ""}
                 <tr>
                   <td>E-Tickets naknada</td>
                   <td class="right negative">-${formatCurrency(eTicketsFee, currency, null, false)}</td>
@@ -675,10 +692,10 @@ export default function HomeScreen() {
                     <td class="right">${formatCurrency(karticaBreakdown.amount, currency, null, false)}</td>
                     <td class="right negative">-${formatCurrency(karticaBreakdown.totalFee, currency, null, false)}</td>
                   </tr>
-                  ${gratisCount > 0 ? `<tr class="gratis-row"><td>Gratis (besplatne)</td><td class="right purple">${gratisCount}</td><td class="right purple">0,00 €</td><td class="right purple">0,00 €</td></tr>` : ""}
+                  ${savezCount > 0 ? `<tr class="gratis-row"><td>Savez (${savezGratis}g / ${savezPaid}p)</td><td class="right purple">${savezCount}</td><td class="right purple">-</td><td class="right purple">-</td></tr>` : ""}
                   <tr class="summary-row">
                     <td>UKUPNO</td>
-                    <td class="right">${totalSold}${gratisCount > 0 ? ` (+${gratisCount} gratis)` : ""}</td>
+                    <td class="right">${totalSold}${savezCount > 0 ? ` (+${savezCount} savez)` : ""}</td>
                     <td class="right">${formatCurrency(totalRevenue, currency, null, false)}</td>
                     <td class="right negative">-${formatCurrency(eTicketsFee, currency, null, false)}</td>
                   </tr>

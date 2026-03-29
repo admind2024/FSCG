@@ -90,9 +90,17 @@ export function extractSectorFromSeatId(seatId: string): string {
   const galMatch = s.match(/^Galerija\s+Sektor\s+([A-Z])/i);
   if (galMatch) return `${galMatch[1].toUpperCase()}-galerija`;
 
-  // Sektor VIP X-... → X (VIP sektor)
+  // "Sektor GALERIJA-SEKTOR X-..." → X-galerija
+  const sektorGalMatch = s.match(/^Sektor\s+GALERIJA[\s-]+SEKTOR\s+([A-Z])/i);
+  if (sektorGalMatch) return `${sektorGalMatch[1].toUpperCase()}-galerija`;
+
+  // Sektor VIP X-... → X (VIP sektor sa slovom iza)
   const vipSektorMatch = s.match(/^Sektor\s+VIP\s+([A-Z])/i);
   if (vipSektorMatch) return vipSektorMatch[1].toUpperCase();
+
+  // "Sektor VIP-1-6" → koristi kategoriju za tribune, VIP bez slova
+  const vipNoLetterMatch = s.match(/^Sektor\s+VIP-\d/i);
+  if (vipNoLetterMatch) return "VIP";
 
   // VIP X-... → X
   const vipMatch = s.match(/^VIP\s+([A-Z])/i);
@@ -101,6 +109,10 @@ export function extractSectorFromSeatId(seatId: string): string {
   // Tribina Sektor X... → X (remove trailing digits like B1, B2)
   const tribMatch = s.match(/^Tribina\s+Sektor\s+([A-Z])/i);
   if (tribMatch) return tribMatch[1].toUpperCase();
+
+  // "Sektor sektor X-..." → X (dupli "Sektor sektor" format)
+  const duplSektorMatch = s.match(/^Sektor\s+sektor\s+([A-Z])/i);
+  if (duplSektorMatch) return duplSektorMatch[1].toUpperCase();
 
   // Sektor X (desno/lijevo/...) → X
   const sektorMatch = s.match(/^Sektor\s+([A-Z])/i);

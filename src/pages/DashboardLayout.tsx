@@ -14,6 +14,7 @@ import {
   Shield,
   Sun,
   Moon,
+  ScanLine,
 } from "lucide-react";
 import { useTheme } from "@/hooks/use-theme";
 import { Button } from "@/components/ui/button";
@@ -29,12 +30,13 @@ import LocationScreen from "./screens/LocationScreen";
 import CategoriesScreen from "./screens/CategoriesScreen";
 import AnalysisScreen from "./screens/AnalysisScreen";
 import BukiranjeScreen from "./screens/BukiranjeScreen";
+import CheckInScreen from "./screens/CheckInScreen";
 import LoadingScreen from "@/components/LoadingScreen";
 import InstallPrompt from "@/components/InstallPrompt";
 import { triggerUpdateCheck } from "@/components/PWAUpdatePrompt";
 import logo from "@/assets/fscg-logo.png";
 
-type Screen = "home" | "daily" | "location" | "categories" | "analysis" | "bukiranje";
+type Screen = "home" | "daily" | "location" | "categories" | "analysis" | "bukiranje" | "checkin";
 
 // FSCG brand color - red (used for active tabs etc.)
 const brandColor = "#C8102E";
@@ -80,6 +82,7 @@ export default function DashboardLayout({ onSwitchToAdmin }: DashboardLayoutProp
       { id: "location", label: "Lokacija", icon: MapPin },
       { id: "categories", label: "Tribine", icon: Layers },
       { id: "analysis", label: "Analiza", icon: Clock },
+      { id: "checkin", label: "Ček-In", icon: ScanLine },
     ];
 
     if (hasRezervacije) {
@@ -115,6 +118,8 @@ export default function DashboardLayout({ onSwitchToAdmin }: DashboardLayoutProp
         return <AnalysisScreen />;
       case "bukiranje":
         return <BukiranjeScreen />;
+      case "checkin":
+        return <CheckInScreen />;
     }
   };
 

@@ -703,8 +703,12 @@ export default function CategoriesScreen() {
       }
     });
 
-    // Savez/Igraci karte iz posebnog polja (koji NISU u allTickets - provjeri duplikate)
-    // Ove karte su već u allTickets jer context ih uključuje, pa ih ne dodajemo ponovo
+    // Savez/Igraci karte iz posebnog polja — NISU u allTickets jer DashboardContext ih filtrira
+    savezIgraciTickets.forEach((t: any) => {
+      const price = Number(t.price) || 0;
+      const { tribune, sector } = extractSectorForTicket(t.category || "", t.seatId || "");
+      addToSectorHelper(t, tribune, sector, "savez", price === 0);
+    });
 
     sectorStats.push(...Array.from(sectorMap.values()));
   }

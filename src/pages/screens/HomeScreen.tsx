@@ -22,24 +22,12 @@ import {
 } from "lucide-react";
 import { Skeleton } from "@/components/ui/skeleton";
 import { AnimatedNumber } from "@/components/AnimatedNumber";
-
-// ═══════════════════════════════════════════════════════════════
-// SUPABASE DIREKTNO - za odbitke
-// ═══════════════════════════════════════════════════════════════
-const SUPABASE_URL = "https://hvpytasddzeprgqkwlbu.supabase.co";
-const SUPABASE_KEY =
-  "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imh2cHl0YXNkZHplcHJncWt3bGJ1Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjY2MDMyODQsImV4cCI6MjA4MjE3OTI4NH0.R1wPgBpyO7MHs0YL_pW0XBKkX8QweJ8MuhHUpuDSuKk";
-
-const supabaseHeaders = {
-  apikey: SUPABASE_KEY,
-  Authorization: `Bearer ${SUPABASE_KEY}`,
-  "Content-Type": "application/json",
-};
+import { SUPABASE_URL, supabaseHeaders } from "@/lib/supabaseConfig";
 
 async function fetchDeductionsFromSupabase(eventId: string): Promise<Deduction[]> {
   try {
     // Tabela EventDeductions sa eventId filterom
-    const url = `${SUPABASE_URL}/rest/v1/EventDeductions?eventId=eq.${encodeURIComponent(eventId)}&select=*&limit=1`;
+    const url = `${SUPABASE_URL}/rest/v1/EventDeductions?eventId=eq.${encodeURIComponent(eventId)}&select=id,eventId,deductions,created_at&limit=1`;
     console.log("Fetching deductions from Supabase:", url);
 
     const response = await fetch(url, { headers: supabaseHeaders });

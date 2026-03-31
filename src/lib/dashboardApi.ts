@@ -9,48 +9,7 @@ import {
   getTotalCapacity,
   isTicketHidden,
 } from "./dashboard-utils";
-
-// ============================================
-// SUPABASE CONFIG
-// ============================================
-
-const SUPABASE_URL = "https://hvpytasddzeprgqkwlbu.supabase.co";
-const SUPABASE_KEY =
-  "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imh2cHl0YXNkZHplcHJncWt3bGJ1Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjY2MDMyODQsImV4cCI6MjA4MjE3OTI4NH0.R1wPgBpyO7MHs0YL_pW0XBKkX8QweJ8MuhHUpuDSuKk";
-
-const headers = {
-  apikey: SUPABASE_KEY,
-  Authorization: `Bearer ${SUPABASE_KEY}`,
-  "Content-Type": "application/json",
-};
-
-// ============================================
-// GENERIC QUERY FUNCTION
-// ============================================
-
-async function supabaseQuery(table: string, params: string = ""): Promise<any[]> {
-  const allData: any[] = [];
-  let offset = 0;
-  const limit = 1000;
-
-  while (true) {
-    const url = `${SUPABASE_URL}/rest/v1/${table}?${params}&limit=${limit}&offset=${offset}`;
-    const res = await fetch(url, { headers });
-
-    if (!res.ok) {
-      console.error("Supabase error:", res.status, res.statusText);
-      throw new Error(`Query failed: ${res.statusText}`);
-    }
-
-    const data = await res.json();
-    allData.push(...data);
-
-    if (data.length < limit) break;
-    offset += limit;
-  }
-
-  return allData;
-}
+import { supabaseQuery } from "./supabaseConfig";
 
 // ============================================
 // LOAD EVENTS LIST

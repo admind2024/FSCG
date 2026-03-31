@@ -5,80 +5,7 @@
 // ALOKACIJE - dodane iz AboutEvents.allocations
 import React, { createContext, useContext, useState, useEffect } from "react";
 import { User, EventData, EventInfo, Ticket } from "@/types/dashboard";
-
-// ============================================
-// SUPABASE DIREKTNO
-// ============================================
-
-const SUPABASE_URL = "https://hvpytasddzeprgqkwlbu.supabase.co";
-const SUPABASE_KEY =
-  "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imh2cHl0YXNkZHplcHJncWt3bGJ1Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjY2MDMyODQsImV4cCI6MjA4MjE3OTI4NH0.R1wPgBpyO7MHs0YL_pW0XBKkX8QweJ8MuhHUpuDSuKk";
-
-const headers = {
-  apikey: SUPABASE_KEY,
-  Authorization: `Bearer ${SUPABASE_KEY}`,
-  "Content-Type": "application/json",
-};
-
-// GET query sa paginacijom
-async function supabaseQuery(table: string, params: string = ""): Promise<any[]> {
-  const allData: any[] = [];
-  let offset = 0;
-  const limit = 1000;
-
-  while (true) {
-    const url = `${SUPABASE_URL}/rest/v1/${table}?${params}&limit=${limit}&offset=${offset}`;
-    console.log("Supabase query:", url);
-    const res = await fetch(url, { headers });
-    if (!res.ok) {
-      console.error("Supabase error:", res.status, res.statusText);
-      throw new Error(`Query failed: ${res.statusText}`);
-    }
-    const data = await res.json();
-    allData.push(...data);
-    if (data.length < limit) break;
-    offset += limit;
-  }
-
-  console.log("Supabase TOTAL:", table, allData.length, "rows");
-  return allData;
-}
-
-// UPDATE - ažurira red u bazi
-async function supabaseUpdate(table: string, id: string, data: Record<string, any>): Promise<boolean> {
-  try {
-    const url = `${SUPABASE_URL}/rest/v1/${table}?id=eq.${id}`;
-    const res = await fetch(url, {
-      method: "PATCH",
-      headers: {
-        ...headers,
-        Prefer: "return=minimal",
-      },
-      body: JSON.stringify(data),
-    });
-    return res.ok;
-  } catch (err) {
-    console.error("Supabase update error:", err);
-    return false;
-  }
-}
-
-// BATCH UPDATE - ažurira više redova odjednom
-async function supabaseBatchUpdate(table: string, ids: string[], data: Record<string, any>): Promise<number> {
-  if (ids.length === 0) return 0;
-
-  let successCount = 0;
-  const BATCH_SIZE = 50;
-
-  for (let i = 0; i < ids.length; i += BATCH_SIZE) {
-    const batch = ids.slice(i, i + BATCH_SIZE);
-    const promises = batch.map((id) => supabaseUpdate(table, id, data));
-    const results = await Promise.all(promises);
-    successCount += results.filter((r) => r).length;
-  }
-
-  return successCount;
-}
+import { supabaseQuery, supabaseBatchUpdate } from "@/lib/supabaseConfig";
 
 // ============================================
 // BUSINESS LOGIC - IDENTIČNO KAO WIX
@@ -497,7 +424,7 @@ export function DashboardProvider({ children }: { children: React.ReactNode }) {
 
     const loadEvents = async () => {
       try {
-        const aboutEvents = await supabaseQuery("AboutEvents", `eventKey=in.(${user.eventIds.join(",")})`);
+        const aboutEvents = await supabaseQuery("AboutEvents", `eventKey=in.(${user.eventIds.join(",")})&select=eventKey,name,venue,date,capacity,description`);
 
         console.log("AboutEvents raw data:", aboutEvents);
 
@@ -563,7 +490,7 @@ export function DashboardProvider({ children }: { children: React.ReactNode }) {
       try {
         const [allTickets, aboutEvents] = await Promise.all([
           supabaseQuery("QRKarte", `eventId=eq.${selectedEventId}`),
-          supabaseQuery("AboutEvents", `eventKey=eq.${selectedEventId}`),
+          supabaseQuery("AboutEvents", `eventKey=eq.${selectedEventId}&select=eventKey,name,venue,date,event_time,currency,serviceFeePercentage,pdvPercentage,biletarnicaFee,virmanFee,description,online,biletarnica,capacity,allocations`),
         ]);
 
         const eventInfo = aboutEvents[0];
@@ -603,7 +530,10 @@ export function DashboardProvider({ children }: { children: React.ReactNode }) {
 
         let ticketsAfterSkipRate = allTickets;
         if (skipRateResult.hiddenCount > 0) {
-          ticketsAfterSkipRate = await supabaseQuery("QRKarte", `eventId=eq.${selectedEventId}`);
+          const hiddenIds = new Set(skipRateResult.updatedIds);
+          ticketsAfterSkipRate = allTickets.map((t: any) =>
+            hiddenIds.has(t.id || t._id) ? { ...t, Hide: true, manualHide: false } : t
+          );
         }
 
         // ═══════════════════════════════════════════════════════════
@@ -812,8 +742,31 @@ export function DashboardProvider({ children }: { children: React.ReactNode }) {
 
     loadDashboard();
 
-    const interval = setInterval(loadDashboard, 60000);
-    return () => clearInterval(interval);
+    let interval: ReturnType<typeof setInterval> | null = null;
+
+    const startPolling = () => {
+      if (!interval) interval = setInterval(loadDashboard, 60000);
+    };
+    const stopPolling = () => {
+      if (interval) { clearInterval(interval); interval = null; }
+    };
+
+    const onVisibility = () => {
+      if (document.hidden) {
+        stopPolling();
+      } else {
+        loadDashboard();
+        startPolling();
+      }
+    };
+
+    startPolling();
+    document.addEventListener("visibilitychange", onVisibility);
+
+    return () => {
+      stopPolling();
+      document.removeEventListener("visibilitychange", onVisibility);
+    };
   }, [selectedEventId]);
 
   useEffect(() => {

@@ -34,11 +34,9 @@ import {
   Trophy,
 } from "lucide-react";
 
+import { supabaseQuery } from "@/lib/supabaseConfig";
+
 const ADMIN_EMAIL = "rade.milosevic87@gmail.com";
-const SUPABASE_URL = "https://hvpytasddzeprgqkwlbu.supabase.co";
-const SUPABASE_KEY =
-  "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imh2cHl0YXNkZHplcHJncWt3bGJ1Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjY2MDMyODQsImV4cCI6MjA4MjE3OTI4NH0.R1wPgBpyO7MHs0YL_pW0XBKkX8QweJ8MuhHUpuDSuKk";
-const headers = { apikey: SUPABASE_KEY, Authorization: `Bearer ${SUPABASE_KEY}`, "Content-Type": "application/json" };
 
 const CUSTOMER_SERVICE_FEE_PERCENT = 5;
 const BANK_FEE_PERCENT = 3.25;
@@ -132,20 +130,6 @@ interface CardStatistics {
   byCountry: CardStat[];
   byIssuer: CardStat[];
   byType: CardStat[];
-}
-
-async function supabaseQuery(table: string, params: string = ""): Promise<any[]> {
-  const allData: any[] = [];
-  let offset = 0;
-  while (true) {
-    const res = await fetch(`${SUPABASE_URL}/rest/v1/${table}?${params}&limit=1000&offset=${offset}`, { headers });
-    if (!res.ok) throw new Error(`Query failed`);
-    const data = await res.json();
-    allData.push(...data);
-    if (data.length < 1000) break;
-    offset += 1000;
-  }
-  return allData;
 }
 
 async function fetchDeductions(eventId: string): Promise<Deduction[]> {
@@ -387,19 +371,13 @@ export default function AdminDashboard({ onSwitchToOrganizer }: Props) {
     setIsLoading(true);
     setError(null);
     try {
-      const aboutEvents = await supabaseQuery("AboutEvents", "");
+      const aboutEvents = await supabaseQuery("AboutEvents", "select=eventKey,name,venue,date,currency,serviceFeePercentage,pdvPercentage,biletarnicaFee,virmanFee,description");
       const summaries: EventSummary[] = [];
-      const allTicketsCollected: any[] = [];
 
       for (const ev of aboutEvents) {
         const eventId = ev.eventKey;
         if (!eventId) continue;
-        const tickets = await supabaseQuery("QRKarte", `eventId=eq.${eventId}`);
-
-        // Collect all tickets for card statistics
-        tickets.forEach((t) => {
-          allTicketsCollected.push({ ...t, eventName: ev.name, eventDate: ev.date });
-        });
+        const tickets = await supabaseQuery("QRKarte", `eventId=eq.${eventId}&select=price,salesChannel,Hide,manualHide,status,isFiscalized,customerName,category`);
 
         const deductions = await fetchDeductions(eventId);
 
@@ -529,7 +507,6 @@ export default function AdminDashboard({ onSwitchToOrganizer }: Props) {
         });
       }
       setEvents(summaries);
-      setAllTickets(allTicketsCollected);
       setLastUpdate(new Date());
     } catch (e: any) {
       setError(e.message);
@@ -541,6 +518,37 @@ export default function AdminDashboard({ onSwitchToOrganizer }: Props) {
   useEffect(() => {
     if (isAdmin) loadAll();
   }, [isAdmin]);
+
+  // Lazy load card data only when cards tab is active
+  const [cardsLoading, setCardsLoading] = useState(false);
+  const [cardsLoaded, setCardsLoaded] = useState(false);
+  useEffect(() => {
+    if (activeTab !== "cards" || cardsLoaded || events.length === 0) return;
+    let cancelled = false;
+    const loadCards = async () => {
+      setCardsLoading(true);
+      try {
+        const collected: any[] = [];
+        for (const ev of events) {
+          const tickets = await supabaseQuery(
+            "QRKarte",
+            `eventId=eq.${ev.eventId}&select=eventId,salesChannel,cardBrand,cardCountry,cardDescription,cardIssuer,totalPrice,price,sessionId,orderId,customerEmail,purchaseDate,ticketId,customerName`
+          );
+          tickets.forEach((t) => collected.push({ ...t, eventName: ev.eventName, eventDate: ev.date }));
+        }
+        if (!cancelled) {
+          setAllTickets(collected);
+          setCardsLoaded(true);
+        }
+      } catch (e) {
+        console.error("Error loading card data:", e);
+      } finally {
+        if (!cancelled) setCardsLoading(false);
+      }
+    };
+    loadCards();
+    return () => { cancelled = true; };
+  }, [activeTab, events, cardsLoaded]);
 
   const filtered = useMemo(() => {
     let r = [...events];
@@ -817,7 +825,7 @@ export default function AdminDashboard({ onSwitchToOrganizer }: Props) {
             </div>
           </div>
           <div className="flex items-center gap-2">
-            <button onClick={loadAll} disabled={isLoading} className="p-2 bg-slate-800 hover:bg-slate-700 rounded-lg">
+            <button onClick={() => { setCardsLoaded(false); loadAll(); }} disabled={isLoading} className="p-2 bg-slate-800 hover:bg-slate-700 rounded-lg">
               <RefreshCw className={`w-5 h-5 text-white ${isLoading ? "animate-spin" : ""}`} />
             </button>
             <button onClick={() => setMenuOpen(!menuOpen)} className="p-2 bg-slate-800 rounded-lg lg:hidden">
@@ -1101,6 +1109,12 @@ export default function AdminDashboard({ onSwitchToOrganizer }: Props) {
         {/* CARDS TAB */}
         {activeTab === "cards" && (
           <>
+            {cardsLoading && (
+              <div className="flex items-center justify-center gap-2 py-8 text-slate-400">
+                <RefreshCw className="w-5 h-5 animate-spin" />
+                <span>Učitavanje card podataka...</span>
+              </div>
+            )}
             {/* Card Summary Stats */}
             <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
               <div className="bg-slate-800/50 border border-slate-700 rounded-xl p-3">

@@ -70,11 +70,25 @@ export default function CheckInScreen() {
   const fetchScanData = useCallback(async () => {
     if (!selectedEventId) return;
     try {
-      const data = await supabaseQuery(
-        "QRKarte",
-        `eventId=eq.${selectedEventId}&select=isUsed,used,checkTime,scannedAt,category,entrance,salesChannel`
+      // Dohvati eventId polje iz AboutEvents (može biti comma-separated, npr. "mneslo,uuid")
+      const aboutEvents = await supabaseQuery(
+        "AboutEvents",
+        `eventKey=eq.${selectedEventId}&select=eventId`
       );
-      setTickets(data as ScanTicket[]);
+      const rawEventId = aboutEvents[0]?.eventId || selectedEventId;
+      const eventIds = rawEventId.split(",").map((id: string) => id.trim()).filter(Boolean);
+
+      // Vuci karte za svaki eventId
+      let allData: any[] = [];
+      for (const eid of eventIds) {
+        const data = await supabaseQuery(
+          "QRKarte",
+          `eventId=eq.${eid}&select=isUsed,used,checkTime,scannedAt,category,entrance,salesChannel`
+        );
+        allData = allData.concat(data);
+      }
+
+      setTickets(allData as ScanTicket[]);
       setLastUpdate(new Date());
     } catch (e) {
       console.error("CheckIn fetch error:", e);

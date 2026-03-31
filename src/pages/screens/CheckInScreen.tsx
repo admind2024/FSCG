@@ -122,7 +122,7 @@ export default function CheckInScreen() {
     let interval: ReturnType<typeof setInterval> | null = null;
 
     const start = () => {
-      if (!interval) interval = setInterval(fetchScanData, 30000);
+      if (!interval) interval = setInterval(fetchScanData, 60000);
     };
     const stop = () => {
       if (interval) { clearInterval(interval); interval = null; }
@@ -208,7 +208,15 @@ export default function CheckInScreen() {
       scanned: s.scanned,
       percentage: s.total > 0 ? (s.scanned / s.total) * 100 : 0,
     }))
-    .sort((a, b) => b.total - a.total);
+    .sort((a, b) => {
+      const order = ["Zapad A,B,C", "Zapad D,E,F", "Istok", "Sjever", "Jug", "VIP"];
+      const ia = order.indexOf(a.name);
+      const ib = order.indexOf(b.name);
+      if (ia >= 0 && ib >= 0) return ia - ib;
+      if (ia >= 0) return -1;
+      if (ib >= 0) return 1;
+      return b.total - a.total;
+    });
 
   // Channel stats
   const channelMap = new Map<string, { total: number; scanned: number }>();
@@ -241,7 +249,7 @@ export default function CheckInScreen() {
       {lastUpdate && (
         <div className="flex items-center gap-2 text-xs text-muted-foreground">
           <RefreshCw className="w-3 h-3" />
-          <span>Auto-refresh 30s | {lastUpdate.toLocaleTimeString("sr-Latn-BA")}</span>
+          <span>Auto-refresh 60s | {lastUpdate.toLocaleTimeString("sr-Latn-BA")}</span>
         </div>
       )}
 

@@ -157,8 +157,9 @@ export default function HomeScreen() {
   }).length;
   const savezPaid = savezCount - savezGratis;
   const totalSold = paidTickets.length;
+  const totalOccupied = totalSold + savezCount;
 
-  const fillPercentage = totalCapacity > 0 ? (totalSold / totalCapacity) * 100 : 0;
+  const fillPercentage = totalCapacity > 0 ? (totalOccupied / totalCapacity) * 100 : 0;
 
   const channelTotals = {
     online: { count: 0, amount: 0 },
@@ -280,7 +281,7 @@ export default function HomeScreen() {
                 </div>
               </div>
               <p className="text-3xl md:text-4xl font-black text-foreground leading-none">{totalSold}</p>
-              <p className="text-[11px] text-muted-foreground mt-1">od {totalCapacity} mesta</p>
+              <p className="text-[11px] text-muted-foreground mt-1">{savezCount > 0 ? `+ ${savezCount} savez = ${totalOccupied}` : ""} od {totalCapacity} mesta</p>
               <div className="mt-2.5">
                 <Progress value={fillPercentage} className={`h-1.5 ${getFillColor(fillPercentage)}`} />
                 <p className="text-[11px] mt-1 font-semibold text-muted-foreground">{fillPercentage.toFixed(1)}% popunjeno</p>

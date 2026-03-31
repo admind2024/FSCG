@@ -603,10 +603,13 @@ export default function CategoriesScreen() {
   const totalCapacity = isStadion
     ? Object.values(getTribuneCapacities()).reduce((s, v) => s + v, 0)
     : getTotalCapacity(selectedEvent.capacity);
-  const fillPercentage = totalCapacity > 0 ? (totalTickets / totalCapacity) * 100 : 0;
+  // Savez karte se uključuju u popunjenost kapaciteta
+  const savezIgraciCount = ((selectedEvent as any).savezIgraciTickets || []).length;
+  const totalOccupied = totalTickets + savezIgraciCount;
+  const fillPercentage = totalCapacity > 0 ? (totalOccupied / totalCapacity) * 100 : 0;
 
-  // STVARNO PREOSTALO = Kapacitet - (Prodato + Gratis + Sve alokacije)
-  const realRemaining = Math.max(0, totalCapacity - totalTickets - allocationSummary.total);
+  // STVARNO PREOSTALO = Kapacitet - (Prodato + Gratis + Savez + Sve alokacije)
+  const realRemaining = Math.max(0, totalCapacity - totalOccupied - allocationSummary.total);
 
   const currency = selectedEvent.currency;
 

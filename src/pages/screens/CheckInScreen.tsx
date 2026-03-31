@@ -38,6 +38,18 @@ interface EntranceStats {
   percentage: number;
 }
 
+function normalizeEntrance(entrance: string): string {
+  if (!entrance) return "Nepoznat";
+  const e = entrance.trim();
+  if (/zapad.*a.*b.*c/i.test(e)) return "Zapad A,B,C";
+  if (/zapad.*d.*e.*f/i.test(e)) return "Zapad D,E,F";
+  if (/sjever|north/i.test(e)) return "Sjever";
+  if (/jug|south/i.test(e)) return "Jug";
+  if (/istok|east/i.test(e)) return "Istok";
+  if (/vip/i.test(e)) return "VIP";
+  return e;
+}
+
 function isScanned(t: ScanTicket): boolean {
   return t.isUsed === "true" || t.used === "true" || !!t.checkTime;
 }
@@ -182,7 +194,7 @@ export default function CheckInScreen() {
   // Entrance stats
   const entranceMap = new Map<string, { total: number; scanned: number }>();
   tickets.forEach((t) => {
-    const entrance = t.entrance || "Nepoznat";
+    const entrance = normalizeEntrance(t.entrance);
     if (!entranceMap.has(entrance)) entranceMap.set(entrance, { total: 0, scanned: 0 });
     const stat = entranceMap.get(entrance)!;
     stat.total++;

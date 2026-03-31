@@ -882,7 +882,7 @@ export default function CategoriesScreen() {
                       groupAllocByChannel[ch] = (groupAllocByChannel[ch] || 0) + cnt;
                     });
                   });
-                  const realAvailable = Math.max(0, g.capacity - g.count - groupAllocTotal);
+                  const realAvailable = Math.max(0, g.capacity - g.count - savezInGroup - groupAllocTotal);
 
                   return (
                     <tr
@@ -1194,7 +1194,8 @@ export default function CategoriesScreen() {
                   <Tooltip
                     formatter={(value: number, name: string) => {
                       const g = groupedStats.find((gs) => gs.group === name);
-                      const remaining = g ? Math.max(0, g.capacity - g.count) : 0;
+                      const savezInG = g ? g.subcategories.reduce((sum, sub) => sum + (savezByCategory[sub]?.total || 0), 0) : 0;
+                      const remaining = g ? Math.max(0, g.capacity - g.count - savezInG) : 0;
                       return [`${value} prodato / ${remaining} preostalo`, name];
                     }}
                     contentStyle={{ fontSize: 12, borderRadius: 8 }}
@@ -1218,8 +1219,9 @@ export default function CategoriesScreen() {
             <div className="space-y-2 max-h-72 overflow-y-auto">
               {groupedStats.map((g, idx) => {
                 const gColor = getCategoryColor(g.group, idx);
-                const remaining = Math.max(0, g.capacity - g.count);
-                const fillPct = g.capacity > 0 ? (g.count / g.capacity) * 100 : 0;
+                const savezInG = g.subcategories.reduce((sum, sub) => sum + (savezByCategory[sub]?.total || 0), 0);
+                const remaining = Math.max(0, g.capacity - g.count - savezInG);
+                const fillPct = g.capacity > 0 ? ((g.count + savezInG) / g.capacity) * 100 : 0;
 
                 return (
                   <div
@@ -1400,7 +1402,7 @@ export default function CategoriesScreen() {
               const groupAllocTotal = g.subcategories.reduce((sum, sub) => {
                 return sum + calculateCategoryAllocations(allocations, sub).total;
               }, 0);
-              const remaining = Math.max(0, g.capacity - g.count - groupAllocTotal);
+              const remaining = Math.max(0, g.capacity - g.count - savezInGrp - groupAllocTotal);
 
               const gIndex = groupedStats.findIndex((gs) => gs.group === selectedCategory);
               const gColor = getCategoryColor(selectedCategory, gIndex);
@@ -1474,10 +1476,10 @@ export default function CategoriesScreen() {
                         <div className="flex justify-between text-xs">
                           <span className="text-muted-foreground">Popunjenost</span>
                           <span className="font-semibold">
-                            {(((g.count + groupAllocTotal) / g.capacity) * 100).toFixed(1)}%
+                            {(((g.count + savezInGrp + groupAllocTotal) / g.capacity) * 100).toFixed(1)}%
                           </span>
                         </div>
-                        <Progress value={((g.count + groupAllocTotal) / g.capacity) * 100} className="h-2" />
+                        <Progress value={((g.count + savezInGrp + groupAllocTotal) / g.capacity) * 100} className="h-2" />
                       </div>
                     )}
 

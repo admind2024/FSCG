@@ -17,14 +17,9 @@ function pct(value: number): string {
 export async function generateEventReport(params: ReportParams): Promise<void> {
   // Lazy import to reduce bundle size
   const { jsPDF } = await import("jspdf");
-  const autoTableModule = await import("jspdf-autotable");
+  await import("jspdf-autotable");
 
   const doc = new jsPDF({ orientation: "portrait", unit: "mm", format: "a4" });
-
-  // autoTable plugin registration
-  if (typeof autoTableModule.default === "function") {
-    autoTableModule.default(doc);
-  }
 
   const pageWidth = doc.internal.pageSize.getWidth();
   const margin = 15;

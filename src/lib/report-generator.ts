@@ -17,7 +17,7 @@ function pct(value: number): string {
 export async function generateEventReport(params: ReportParams): Promise<void> {
   // Lazy import to reduce bundle size
   const { jsPDF } = await import("jspdf");
-  await import("jspdf-autotable");
+  const { default: autoTable } = await import("jspdf-autotable");
 
   const doc = new jsPDF({ orientation: "portrait", unit: "mm", format: "a4" });
 
@@ -118,7 +118,7 @@ export async function generateEventReport(params: ReportParams): Promise<void> {
     const totalRows = body.length;
     const summaryCount = opts?.summaryRows || 0;
 
-    (doc as any).autoTable({
+    const result = autoTable(doc, {
       startY: y,
       head,
       body,
@@ -153,7 +153,7 @@ export async function generateEventReport(params: ReportParams): Promise<void> {
       },
     });
 
-    y = (doc as any).lastAutoTable.finalY + 4;
+    y = (result as any)?.finalY ?? y + 20;
   }
 
   // ═══════════════════════════════════════════════════════════

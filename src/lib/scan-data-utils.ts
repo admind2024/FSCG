@@ -103,7 +103,7 @@ export async function fetchScanStatistics(
   const tribuneOrder = ["Zapad", "Istok", "Sjever", "Jug", "VIP"];
   const byTribune = buildBreakdown(
     allTickets,
-    (t) => isStadion ? getTribuneFromCategory(t.category) : (t.category || "Ostalo"),
+    (t) => isStadion ? getTribuneFromCategory(t.category || "") : (t.category || "Ostalo"),
   );
   if (isStadion) {
     byTribune.sort((a, b) => {

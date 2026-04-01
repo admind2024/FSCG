@@ -175,17 +175,21 @@ export async function generateEventReport(params: ReportParams): Promise<void> {
       `${params.savez.count} kom`,
     ]);
   }
-  finBody.push([`E-Tickets prihod (ukupni)`, `-${fmt(params.totalETicketsRevenue, c)}`]);
+  const totalDed = params.deductions.reduce((s, d) => s + d.amount, 0);
+  const totalETicketsWithDed = params.totalETicketsRevenue + totalDed;
+
+  finBody.push([`E-Tickets prihod (ukupni)`, `-${fmt(totalETicketsWithDed, c)}`]);
+  finBody.push([`  - Naknada od prodaje karata`, fmt(params.eTicketsFee, c)]);
   if (params.igraciProdaja) {
-    finBody.push([`  - Naknada od prodaje karata`, fmt(params.eTicketsFee, c)]);
     finBody.push([
       `  - Procenat igraci (${params.igraciProdaja.count} x ${params.igraciProdaja.feePercent}%+PDV)`,
       fmt(params.igraciProdaja.totalFee, c),
     ]);
   }
   if (params.deductions.length > 0) {
-    const totalDed = params.deductions.reduce((s, d) => s + d.amount, 0);
-    finBody.push(["Ukupno odbici", `-${fmt(totalDed, c)}`]);
+    for (const d of params.deductions) {
+      finBody.push([`  - ${d.name}`, fmt(d.amount, c)]);
+    }
   }
   finBody.push(["FINALNI IZNOS ZA ISPLATU", fmt(params.finalPayout, c)]);
 
@@ -254,18 +258,7 @@ export async function generateEventReport(params: ReportParams): Promise<void> {
     );
   }
 
-  // ── 5. ODBICI ───────────────────────────────────────────
-  if (params.deductions.length > 0) {
-    drawSectionTitle("DODATNI ODBICI");
-
-    const dedBody = params.deductions.map((d) => [d.name, `-${fmt(d.amount, c)}`]);
-    const totalDed = params.deductions.reduce((s, d) => s + d.amount, 0);
-    dedBody.push(["UKUPNO ODBICI", `-${fmt(totalDed, c)}`]);
-
-    drawTable([["Naziv", "Iznos"]], dedBody, { summaryRows: 1 });
-  }
-
-  // ── 6. CHECK-IN STATISTIKE ─────────────────────────────
+  // ── 5. CHECK-IN STATISTIKE ─────────────────────────────
   if (params.scanStats) {
     const ss = params.scanStats;
 

@@ -2,7 +2,9 @@ import { useState, useEffect } from "react";
 import { useDashboard, useAuth } from "@/contexts/DashboardContext";
 import { filterVisibleTickets, normalizeSalesChannel, getTotalCapacity, formatCurrency } from "@/lib/dashboard-utils";
 import { isGradskiStadion, getTribuneCapacities } from "@/lib/stadium-config";
-import { Deduction } from "@/types/dashboard";
+import { Deduction, ReportParams } from "@/types/dashboard";
+import { fetchScanStatistics } from "@/lib/scan-data-utils";
+import { generateEventReport } from "@/lib/report-generator";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
 import { Button } from "@/components/ui/button";
@@ -19,6 +21,8 @@ import {
   CheckCircle2,
   Printer,
   Users,
+  FileDown,
+  Loader2,
 } from "lucide-react";
 import { Skeleton } from "@/components/ui/skeleton";
 import { AnimatedNumber } from "@/components/AnimatedNumber";
@@ -97,6 +101,7 @@ export default function HomeScreen() {
   const { user } = useAuth();
   const [deductions, setDeductions] = useState<Deduction[]>([]);
   const [deductionsLoading, setDeductionsLoading] = useState(false);
+  const [reportLoading, setReportLoading] = useState(false);
 
   useEffect(() => {
     const loadDeductions = async () => {
@@ -251,7 +256,32 @@ export default function HomeScreen() {
 
   const eTicketsFee =
     onlineBreakdown.totalFee + biletarnicaBreakdown.totalFee + virmanBreakdown.totalFee + karticaBreakdown.totalFee;
-  const forPayout = totalRevenue - eTicketsFee;
+
+  // ═══════════════════════════════════════════════════════════
+  // PROCENAT OD PRODAJE IGRAČI (4% + PDV)
+  // Karte sa customerName "IGRACI PRODAJA" i price > 0
+  // E-Tickets prihod od prodaje karata za igrače
+  // ═══════════════════════════════════════════════════════════
+  const igraciProdajaTickets = savezIgraciTickets.filter(
+    (t: any) => Number(t.price) > 0
+  );
+  const igraciProdajaTotal = igraciProdajaTickets.reduce((sum: number, t: any) => sum + Number(t.price), 0);
+  const igraciProdajaFeePercent = 4;
+  const igraciProdajaFee = igraciProdajaTotal * (igraciProdajaFeePercent / 100);
+  const igraciProdajaPdv = igraciProdajaFee * (pdvPercentFee / 100);
+  const igraciProdajaTotalFee = igraciProdajaFee + igraciProdajaPdv;
+
+  // Ukupni E-Tickets prihod (naknada + procenat od prodaje igrači)
+  const totalETicketsRevenue = eTicketsFee + igraciProdajaTotalFee;
+
+  const forPayout = totalRevenue - totalETicketsRevenue;
+
+  // Procenti prodaje po kanalima
+  const biletarnicaPlusKartica = channelTotals.biletarnica.count + channelTotals.kartica.count;
+  const biletarnicaPlusKarticaAmount = channelTotals.biletarnica.amount + channelTotals.kartica.amount;
+  const onlinePercent = totalSold > 0 ? (channelTotals.online.count / totalSold) * 100 : 0;
+  const biletarnicaPercent = totalSold > 0 ? (biletarnicaPlusKartica / totalSold) * 100 : 0;
+  const virmanPercent = totalSold > 0 ? (channelTotals.virman.count / totalSold) * 100 : 0;
 
   const totalDeductions = deductions.reduce((sum, d) => sum + d.amount, 0);
   const finalPayout = forPayout - totalDeductions;
@@ -303,16 +333,21 @@ export default function HomeScreen() {
               </div>
             </div>
 
-            {/* E-Tickets Fee */}
+            {/* E-Tickets Prihod (ukupni) */}
             <div className="rounded-2xl p-3 md:p-4 bg-white dark:bg-card border border-gray-100 dark:border-border shadow-sm">
               <div className="flex items-start justify-between mb-2">
-                <span className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wider">E-Tickets Fee</span>
+                <span className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wider">E-Tickets Prihod</span>
                 <div className="w-7 h-7 rounded-xl bg-pink-500 flex items-center justify-center shadow-sm">
                   <TrendingUp className="w-3.5 h-3.5 text-white" />
                 </div>
               </div>
-              <p className="text-2xl md:text-3xl font-black text-foreground leading-none">{formatCurrency(eTicketsFee, currency, exchangeRate)}</p>
-              <p className="text-[11px] text-muted-foreground mt-1">naknada e-tickets platforme</p>
+              <p className="text-2xl md:text-3xl font-black text-foreground leading-none">{formatCurrency(totalETicketsRevenue, currency, exchangeRate)}</p>
+              <div className="text-[11px] text-muted-foreground mt-2 space-y-0.5">
+                <p>Naknada: <span className="font-semibold text-foreground">{formatCurrency(eTicketsFee, currency, exchangeRate, false)}</span></p>
+                {igraciProdajaTickets.length > 0 && (
+                  <p>Igrači ({igraciProdajaFeePercent}%+PDV): <span className="font-semibold text-foreground">{formatCurrency(igraciProdajaTotalFee, currency, exchangeRate, false)}</span></p>
+                )}
+              </div>
             </div>
 
             {/* Za Isplatu */}
@@ -358,6 +393,34 @@ export default function HomeScreen() {
               </CardContent>
             </Card>
           )}
+
+          {/* Ukupni procenat prodaje po kanalima */}
+          <Card className="bg-white dark:bg-card border border-gray-200 dark:border-border shadow-sm border-l-4 border-l-indigo-500">
+            <CardContent className="p-3">
+              <p className="text-xs font-semibold text-gray-600 dark:text-muted-foreground uppercase tracking-wide mb-2">Procenat prodaje po kanalima</p>
+              <div className="grid grid-cols-3 gap-2">
+                <div className="text-center p-2 bg-indigo-50 dark:bg-indigo-500/10 rounded-lg">
+                  <Globe className="w-4 h-4 text-indigo-600 mx-auto mb-1" />
+                  <p className="text-lg font-black text-indigo-600">{onlinePercent.toFixed(1)}%</p>
+                  <p className="text-[10px] text-gray-500 dark:text-muted-foreground">Online</p>
+                  <p className="text-[10px] font-semibold text-gray-700 dark:text-foreground">{channelTotals.online.count} / {formatCurrency(channelTotals.online.amount, currency, exchangeRate, false)}</p>
+                </div>
+                <div className="text-center p-2 bg-pink-50 dark:bg-pink-500/10 rounded-lg">
+                  <MapPin className="w-4 h-4 text-pink-600 mx-auto mb-1" />
+                  <p className="text-lg font-black text-pink-600">{biletarnicaPercent.toFixed(1)}%</p>
+                  <p className="text-[10px] text-gray-500 dark:text-muted-foreground">Biletarnica</p>
+                  <p className="text-[10px] font-semibold text-gray-700 dark:text-foreground">{biletarnicaPlusKartica} / {formatCurrency(biletarnicaPlusKarticaAmount, currency, exchangeRate, false)}</p>
+                  <p className="text-[9px] text-gray-400">({channelTotals.biletarnica.count} got. + {channelTotals.kartica.count} kart.)</p>
+                </div>
+                <div className="text-center p-2 bg-sky-50 dark:bg-sky-500/10 rounded-lg">
+                  <Building className="w-4 h-4 text-sky-600 mx-auto mb-1" />
+                  <p className="text-lg font-black text-sky-600">{virmanPercent.toFixed(1)}%</p>
+                  <p className="text-[10px] text-gray-500 dark:text-muted-foreground">Virman</p>
+                  <p className="text-[10px] font-semibold text-gray-700 dark:text-foreground">{channelTotals.virman.count} / {formatCurrency(channelTotals.virman.amount, currency, exchangeRate, false)}</p>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
         </div>
 
         {/* Right Column - Channel Summary (1/3 width on desktop) */}
@@ -561,6 +624,41 @@ export default function HomeScreen() {
         </Card>
       </div>
 
+      {/* Igrači Prodaja - detaljan prikaz */}
+      {igraciProdajaTickets.length > 0 && (
+        <Card className="bg-white dark:bg-card border border-gray-200 dark:border-border shadow-sm border-l-4 border-l-violet-500">
+          <CardContent className="p-3">
+            <div className="flex items-center justify-between mb-2">
+              <div className="flex items-center gap-2">
+                <div className="w-8 h-8 rounded-full bg-violet-100 dark:bg-violet-500/20 flex items-center justify-center">
+                  <TrendingUp className="w-4 h-4 text-violet-600" />
+                </div>
+                <p className="text-xs font-semibold text-gray-700 dark:text-muted-foreground">Procenat od Prodaje Igrači ({igraciProdajaFeePercent}% + {pdvPercentFee}% PDV)</p>
+              </div>
+              <span className="text-xs text-violet-600 font-semibold">{igraciProdajaTickets.length} karata</span>
+            </div>
+            <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 text-xs">
+              <div className="bg-gray-50 dark:bg-white/5 rounded-lg p-2">
+                <p className="text-gray-500 dark:text-muted-foreground">Prodaja igrači</p>
+                <p className="font-bold text-gray-900 dark:text-foreground">{formatCurrency(igraciProdajaTotal, currency, exchangeRate, false)}</p>
+              </div>
+              <div className="bg-gray-50 dark:bg-white/5 rounded-lg p-2">
+                <p className="text-gray-500 dark:text-muted-foreground">Naknada ({igraciProdajaFeePercent}%)</p>
+                <p className="font-bold text-violet-600">{formatCurrency(igraciProdajaFee, currency, exchangeRate, false)}</p>
+              </div>
+              <div className="bg-gray-50 dark:bg-white/5 rounded-lg p-2">
+                <p className="text-gray-500 dark:text-muted-foreground">PDV ({pdvPercentFee}%)</p>
+                <p className="font-bold text-violet-600">{formatCurrency(igraciProdajaPdv, currency, exchangeRate, false)}</p>
+              </div>
+              <div className="bg-violet-50 dark:bg-violet-500/10 rounded-lg p-2">
+                <p className="text-gray-500 dark:text-muted-foreground">Ukupno</p>
+                <p className="font-bold text-violet-700">{formatCurrency(igraciProdajaTotalFee, currency, exchangeRate, false)}</p>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+      )}
+
       {/* Row 4: Deductions & Final Payout Section */}
       {(() => {
         const handlePrintReport = () => {
@@ -637,9 +735,17 @@ export default function HomeScreen() {
                 </tr>
                 ${savezCount > 0 ? `<tr class="gratis-row"><td>Savez karte (${savezGratis} gratis / ${savezPaid} sa cijenom)</td><td class="right purple">${savezCount} kom</td></tr>` : ""}
                 <tr>
-                  <td>E-Tickets naknada</td>
-                  <td class="right negative">-${formatCurrency(eTicketsFee, currency, null, false)}</td>
+                  <td>E-Tickets prihod (naknada${igraciProdajaTickets.length > 0 ? ` + ${igraciProdajaFeePercent}% igrači` : ""})</td>
+                  <td class="right negative">-${formatCurrency(totalETicketsRevenue, currency, null, false)}</td>
                 </tr>
+                ${igraciProdajaTickets.length > 0 ? `<tr style="font-size:10px;color:#666">
+                  <td style="padding-left:20px">- Naknada od prodaje karata: ${formatCurrency(eTicketsFee, currency, null, false)}</td>
+                  <td></td>
+                </tr>
+                <tr style="font-size:10px;color:#666">
+                  <td style="padding-left:20px">- Procenat od prodaje igrači (${igraciProdajaTickets.length} x ${igraciProdajaFeePercent}%+PDV): ${formatCurrency(igraciProdajaTotalFee, currency, null, false)}</td>
+                  <td></td>
+                </tr>` : ""}
                 <tr class="summary-row">
                   <td>Osnovni iznos za isplatu</td>
                   <td class="right positive">${formatCurrency(forPayout, currency, null, false)}</td>
@@ -682,11 +788,12 @@ export default function HomeScreen() {
                     <td class="right negative">-${formatCurrency(karticaBreakdown.totalFee, currency, null, false)}</td>
                   </tr>
                   ${savezCount > 0 ? `<tr class="gratis-row"><td>Savez (${savezGratis}g / ${savezPaid}p)</td><td class="right purple">${savezCount}</td><td class="right purple">-</td><td class="right purple">-</td></tr>` : ""}
+                  ${igraciProdajaTickets.length > 0 ? `<tr style="background:#f5f3ff"><td>Igrači prodaja (${igraciProdajaFeePercent}%+PDV)</td><td class="right" style="color:#7c3aed">${igraciProdajaTickets.length}</td><td class="right" style="color:#7c3aed">${formatCurrency(igraciProdajaTotal, currency, null, false)}</td><td class="right negative">-${formatCurrency(igraciProdajaTotalFee, currency, null, false)}</td></tr>` : ""}
                   <tr class="summary-row">
                     <td>UKUPNO</td>
                     <td class="right">${totalSold}${savezCount > 0 ? ` (+${savezCount} savez)` : ""}</td>
                     <td class="right">${formatCurrency(totalRevenue, currency, null, false)}</td>
-                    <td class="right negative">-${formatCurrency(eTicketsFee, currency, null, false)}</td>
+                    <td class="right negative">-${formatCurrency(eTicketsFee + igraciProdajaTotalFee, currency, null, false)}</td>
                   </tr>
                 </tbody>
               </table>
@@ -867,15 +974,80 @@ export default function HomeScreen() {
                   <Receipt className="w-4 h-4 text-gray-700 dark:text-muted-foreground" />
                   Odbici i Finalna Isplata
                 </div>
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={handlePrintReport}
-                  className="h-7 text-xs border-gray-300 hover:bg-gray-100"
-                >
-                  <Printer className="w-3 h-3 mr-1" />
-                  Štampaj
-                </Button>
+                <div className="flex gap-1.5">
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={handlePrintReport}
+                    className="h-7 text-xs border-gray-300 hover:bg-gray-100"
+                  >
+                    <Printer className="w-3 h-3 mr-1" />
+                    Štampaj
+                  </Button>
+                  <Button
+                    variant="default"
+                    size="sm"
+                    disabled={reportLoading}
+                    onClick={async () => {
+                      if (!selectedEventId || !selectedEvent) return;
+                      setReportLoading(true);
+                      try {
+                        const scanStats = await fetchScanStatistics(selectedEventId, venue);
+                        const reportParams: ReportParams = {
+                          eventName: selectedEvent.eventName,
+                          venue,
+                          date: selectedEvent.date || "",
+                          time: selectedEvent.time || "",
+                          currency,
+                          capacity: totalCapacity,
+                          totalSold,
+                          totalOccupied,
+                          fillPercentage,
+                          totalRevenue,
+                          baseAmount,
+                          pdvAmount,
+                          pdvPercentRevenue,
+                          pdvPercentFee,
+                          eTicketsFee,
+                          totalETicketsRevenue,
+                          forPayout,
+                          finalPayout,
+                          channels: {
+                            online: { count: onlineBreakdown.count, amount: onlineBreakdown.amount, feePercent: onlineBreakdown.feePercent, totalFee: onlineBreakdown.totalFee },
+                            biletarnica: { count: biletarnicaBreakdown.count, amount: biletarnicaBreakdown.amount, feePercent: biletarnicaBreakdown.feePercent, totalFee: biletarnicaBreakdown.totalFee },
+                            virman: { count: virmanBreakdown.count, amount: virmanBreakdown.amount, feePercent: virmanBreakdown.feePercent, totalFee: virmanBreakdown.totalFee },
+                            kartica: { count: karticaBreakdown.count, amount: karticaBreakdown.amount, feePercent: karticaBreakdown.feePercent, totalFee: karticaBreakdown.totalFee },
+                          },
+                          salesPercentages: { online: onlinePercent, biletarnica: biletarnicaPercent, virman: virmanPercent },
+                          igraciProdaja: igraciProdajaTickets.length > 0 ? {
+                            count: igraciProdajaTickets.length,
+                            total: igraciProdajaTotal,
+                            feePercent: igraciProdajaFeePercent,
+                            fee: igraciProdajaFee,
+                            pdv: igraciProdajaPdv,
+                            totalFee: igraciProdajaTotalFee,
+                          } : null,
+                          savez: savezCount > 0 ? { count: savezCount, gratis: savezGratis, paid: savezPaid } : null,
+                          deductions,
+                          scanStats,
+                        };
+                        await generateEventReport(reportParams);
+                      } catch (err) {
+                        console.error("Report generation error:", err);
+                      } finally {
+                        setReportLoading(false);
+                      }
+                    }}
+                    className="h-7 text-xs bg-blue-600 hover:bg-blue-700"
+                  >
+                    {reportLoading ? (
+                      <Loader2 className="w-3 h-3 mr-1 animate-spin" />
+                    ) : (
+                      <FileDown className="w-3 h-3 mr-1" />
+                    )}
+                    {reportLoading ? "Generisanje..." : "Generiši Izvještaj"}
+                  </Button>
+                </div>
               </CardTitle>
             </CardHeader>
             <CardContent className="space-y-3">

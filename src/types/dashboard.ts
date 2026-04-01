@@ -234,3 +234,73 @@ export interface FilterOptions {
   city?: string;
   country?: string;
 }
+
+// ============================================
+// SCAN / CHECK-IN STATISTICS
+// ============================================
+
+export interface ScanBreakdown {
+  name: string;
+  total: number;
+  scanned: number;
+  percentage: number;
+}
+
+export interface ScanStatistics {
+  total: number;
+  scanned: number;
+  percentage: number;
+  byTribune: ScanBreakdown[];
+  byEntrance: ScanBreakdown[];
+  byChannel: ScanBreakdown[];
+}
+
+// ============================================
+// REPORT PARAMS
+// ============================================
+
+export interface ReportChannelBreakdown {
+  count: number;
+  amount: number;
+  feePercent: number;
+  totalFee: number;
+}
+
+export interface ReportParams {
+  eventName: string;
+  venue: string;
+  date: string;
+  time: string;
+  currency: string;
+  capacity: number;
+  totalSold: number;
+  totalOccupied: number;
+  fillPercentage: number;
+  totalRevenue: number;
+  baseAmount: number;
+  pdvAmount: number;
+  pdvPercentRevenue: number;
+  pdvPercentFee: number;
+  eTicketsFee: number;
+  totalETicketsRevenue: number;
+  forPayout: number;
+  finalPayout: number;
+  channels: {
+    online: ReportChannelBreakdown;
+    biletarnica: ReportChannelBreakdown;
+    virman: ReportChannelBreakdown;
+    kartica: ReportChannelBreakdown;
+  };
+  salesPercentages: { online: number; biletarnica: number; virman: number };
+  igraciProdaja: {
+    count: number;
+    total: number;
+    feePercent: number;
+    fee: number;
+    pdv: number;
+    totalFee: number;
+  } | null;
+  savez: { count: number; gratis: number; paid: number } | null;
+  deductions: Deduction[];
+  scanStats: ScanStatistics | null;
+}

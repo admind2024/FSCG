@@ -23,3 +23,6 @@ dist-ssr
 *.sln
 *.sw?
 .vercel
+
+# Claude Code Cowork — privremeni git worktree-ovi za izolovane agent sesije
+.claude/worktrees/

@@ -4,6 +4,7 @@
 import { supabaseQuery } from "./supabaseConfig";
 import { isGradskiStadion, getTribuneFromCategory } from "./stadium-config";
 import { ScanStatistics, ScanBreakdown } from "@/types/dashboard";
+import { isTicketHidden } from "./dashboard-utils";
 
 interface RawScanTicket {
   isUsed: string | null;
@@ -90,9 +91,10 @@ export async function fetchScanStatistics(
   for (const eid of eventIds) {
     const data = await supabaseQuery(
       "QRKarte",
-      `eventId=eq.${eid}&select=isUsed,used,checkTime,scannedAt,category,entrance,salesChannel`,
+      `eventId=eq.${eid}&select=isUsed,used,checkTime,scannedAt,category,entrance,salesChannel,Hide,manualHide`,
     );
-    allTickets = allTickets.concat(data as RawScanTicket[]);
+    // Ne računaj sakrivene karte (Hide / manualHide)
+    allTickets = allTickets.concat((data as any[]).filter((t) => !isTicketHidden(t)) as RawScanTicket[]);
   }
 
   const total = allTickets.length;

@@ -2,6 +2,7 @@ import { useState, useEffect, useCallback } from "react";
 import { useDashboard } from "@/contexts/DashboardContext";
 import { supabaseQuery } from "@/lib/supabaseConfig";
 import { isGradskiStadion, getTribuneFromCategory } from "@/lib/stadium-config";
+import { isTicketHidden } from "@/lib/dashboard-utils";
 import { Card, CardContent } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -95,12 +96,13 @@ export default function CheckInScreen() {
       for (const eid of eventIds) {
         const data = await supabaseQuery(
           "QRKarte",
-          `eventId=eq.${eid}&select=isUsed,used,checkTime,scannedAt,category,entrance,salesChannel`
+          `eventId=eq.${eid}&select=isUsed,used,checkTime,scannedAt,category,entrance,salesChannel,Hide,manualHide`
         );
         allData = allData.concat(data);
       }
 
-      setTickets(allData as ScanTicket[]);
+      // Ne prikazuj sakrivene karte (Hide / manualHide)
+      setTickets(allData.filter((t) => !isTicketHidden(t)) as ScanTicket[]);
       setLastUpdate(new Date());
     } catch (e) {
       console.error("CheckIn fetch error:", e);

@@ -3,12 +3,12 @@
 
 export const GRADSKI_STADION_SECTORS: Record<string, Record<string, number>> = {
   Zapad: {
-    A: 898,
-    B: 817,
-    C: 586,
-    D: 578,
-    E: 821,
-    F: 897,
+    A: 820,
+    B: 746,
+    C: 535,
+    D: 528,
+    E: 749,
+    F: 819,
   },
   Istok: {
     A: 55,

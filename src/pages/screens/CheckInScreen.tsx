@@ -23,6 +23,7 @@ interface ScanTicket {
   category: string;
   entrance: string;
   salesChannel: string | null;
+  hidden?: boolean;
 }
 
 interface TribuneStats {
@@ -101,8 +102,13 @@ export default function CheckInScreen() {
         allData = allData.concat(data);
       }
 
-      // Ne prikazuj sakrivene karte (Hide / manualHide)
-      setTickets(allData.filter((t) => !isTicketHidden(t)) as ScanTicket[]);
+      // Sakrivene karte (Hide / manualHide) ne ulaze u zbir prodatih —
+      // zadržavamo ih samo da se skenirane prikažu u broju skeniranih
+      setTickets(
+        allData
+          .map((t) => ({ ...t, hidden: isTicketHidden(t) }))
+          .filter((t) => !t.hidden || isScanned(t)) as ScanTicket[]
+      );
       setLastUpdate(new Date());
     } catch (e) {
       console.error("CheckIn fetch error:", e);
@@ -151,9 +157,11 @@ export default function CheckInScreen() {
   }
 
   // Stats
-  const total = tickets.length;
+  // Ukupno = samo prodate (vidljive) karte; skenirane uključuju i sakrivene
+  const total = tickets.filter((t) => !t.hidden).length;
   const scanned = tickets.filter(isScanned).length;
-  const remaining = total - scanned;
+  const hiddenScanned = tickets.filter((t) => t.hidden && isScanned(t)).length;
+  const remaining = tickets.filter((t) => !t.hidden && !isScanned(t)).length;
   const pct = total > 0 ? (scanned / total) * 100 : 0;
 
   // Last scan time
@@ -172,7 +180,7 @@ export default function CheckInScreen() {
       : (t.category || "Ostalo");
     if (!tribuneMap.has(tribune)) tribuneMap.set(tribune, { total: 0, scanned: 0 });
     const stat = tribuneMap.get(tribune)!;
-    stat.total++;
+    if (!t.hidden) stat.total++;
     if (isScanned(t)) stat.scanned++;
   });
 
@@ -199,7 +207,7 @@ export default function CheckInScreen() {
     const entrance = normalizeEntrance(t.entrance);
     if (!entranceMap.has(entrance)) entranceMap.set(entrance, { total: 0, scanned: 0 });
     const stat = entranceMap.get(entrance)!;
-    stat.total++;
+    if (!t.hidden) stat.total++;
     if (isScanned(t)) stat.scanned++;
   });
 
@@ -226,7 +234,7 @@ export default function CheckInScreen() {
     const ch = t.salesChannel || "Nepoznat";
     if (!channelMap.has(ch)) channelMap.set(ch, { total: 0, scanned: 0 });
     const stat = channelMap.get(ch)!;
-    stat.total++;
+    if (!t.hidden) stat.total++;
     if (isScanned(t)) stat.scanned++;
   });
 
@@ -280,8 +288,10 @@ export default function CheckInScreen() {
             </div>
             <p className="text-3xl font-black text-emerald-600 dark:text-emerald-400">{scanned}</p>
             <div className="mt-1.5">
-              <Progress value={pct} className="h-1.5" />
-              <p className="text-[10px] mt-0.5 text-muted-foreground font-semibold">{pct.toFixed(1)}%</p>
+              <Progress value={Math.min(pct, 100)} className="h-1.5" />
+              <p className="text-[10px] mt-0.5 text-muted-foreground font-semibold">
+                {pct.toFixed(1)}%{hiddenScanned > 0 && ` · od toga ${hiddenScanned} Hide`}
+              </p>
             </div>
           </CardContent>
         </Card>
@@ -335,7 +345,7 @@ export default function CheckInScreen() {
                       </span>
                     </div>
                   </div>
-                  <Progress value={t.percentage} className="h-2" />
+                  <Progress value={Math.min(t.percentage, 100)} className="h-2" />
                 </div>
               ))}
             </div>
@@ -380,7 +390,7 @@ export default function CheckInScreen() {
                         </span>
                       </div>
                     </div>
-                    <Progress value={e.percentage} className="h-1.5" />
+                    <Progress value={Math.min(e.percentage, 100)} className="h-1.5" />
                   </div>
                 ))}
             </div>
@@ -404,7 +414,7 @@ export default function CheckInScreen() {
                     <span className="text-lg font-bold text-emerald-600 dark:text-emerald-400">{ch.scanned}</span>
                     <span className="text-xs text-muted-foreground">/ {ch.total}</span>
                   </div>
-                  <Progress value={ch.percentage} className="h-1 mt-1.5" />
+                  <Progress value={Math.min(ch.percentage, 100)} className="h-1 mt-1.5" />
                   <p className="text-[10px] text-muted-foreground mt-0.5">{ch.percentage.toFixed(1)}% skenirano</p>
                 </div>
               ))}

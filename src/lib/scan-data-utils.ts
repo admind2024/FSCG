@@ -14,6 +14,7 @@ interface RawScanTicket {
   category: string;
   entrance: string;
   salesChannel: string | null;
+  hidden?: boolean;
 }
 
 function isScanned(t: RawScanTicket): boolean {
@@ -56,7 +57,7 @@ function buildBreakdown(
     const key = keyFn(t);
     if (!map.has(key)) map.set(key, { total: 0, scanned: 0 });
     const entry = map.get(key)!;
-    entry.total++;
+    if (!t.hidden) entry.total++;
     if (isScanned(t)) entry.scanned++;
   }
 
@@ -93,11 +94,16 @@ export async function fetchScanStatistics(
       "QRKarte",
       `eventId=eq.${eid}&select=isUsed,used,checkTime,scannedAt,category,entrance,salesChannel,Hide,manualHide`,
     );
-    // Ne računaj sakrivene karte (Hide / manualHide)
-    allTickets = allTickets.concat((data as any[]).filter((t) => !isTicketHidden(t)) as RawScanTicket[]);
+    // Sakrivene karte (Hide / manualHide) ne ulaze u zbir prodatih —
+    // zadržavamo samo skenirane, da se računaju u broj skeniranih
+    allTickets = allTickets.concat(
+      (data as any[])
+        .map((t) => ({ ...t, hidden: isTicketHidden(t) }))
+        .filter((t) => !t.hidden || isScanned(t)) as RawScanTicket[],
+    );
   }
 
-  const total = allTickets.length;
+  const total = allTickets.filter((t) => !t.hidden).length;
   const scanned = allTickets.filter(isScanned).length;
   const isStadion = isGradskiStadion(venue);
 

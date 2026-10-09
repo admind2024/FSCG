@@ -14,7 +14,7 @@ export default defineConfig(({ mode }) => ({
     react(),
     mode === "development" && componentTagger(),
     VitePWA({
-      registerType: 'prompt',
+      registerType: 'autoUpdate',
       includeAssets: ['favicon.ico', 'fscg-logo.png'],
       manifest: {
         name: 'FSCG Dashboard',
@@ -38,6 +38,10 @@ export default defineConfig(({ mode }) => ({
         ]
       },
       workbox: {
+        // Nova verzija se aktivira odmah (nema UI za 'prompt' — korisnici su ostajali na staroj verziji)
+        skipWaiting: true,
+        clientsClaim: true,
+        cleanupOutdatedCaches: true,
         globPatterns: ['**/*.{js,css,html,ico,png,svg,woff,woff2}'],
         runtimeCaching: [
           {

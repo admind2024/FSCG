@@ -64,3 +64,19 @@ export async function supabaseBatchUpdate(
 
   return updatedCount;
 }
+
+// EventDeductions.eventId može biti jedan ID ili lista odvojena zarezom
+// (npr. "uuid1,uuid2" kad sistem isplata unese troškove za više eventId-eva odjednom).
+// Vraća sve redove koji sadrže traženi eventId.
+export async function fetchEventDeductionRows(eventId: string): Promise<any[]> {
+  const rows = await supabaseQuery(
+    "EventDeductions",
+    `eventId=like.*${encodeURIComponent(eventId)}*&select=id,eventId,deductions,created_at&order=created_at.asc`
+  );
+  return rows.filter((row: any) =>
+    String(row.eventId || "")
+      .split(",")
+      .map((id) => id.trim())
+      .includes(eventId)
+  );
+}

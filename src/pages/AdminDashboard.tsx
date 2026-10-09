@@ -34,7 +34,7 @@ import {
   Trophy,
 } from "lucide-react";
 
-import { supabaseQuery } from "@/lib/supabaseConfig";
+import { supabaseQuery, fetchEventDeductionRows } from "@/lib/supabaseConfig";
 
 const ADMIN_EMAIL = "rade.milosevic87@gmail.com";
 
@@ -134,18 +134,24 @@ interface CardStatistics {
 
 async function fetchDeductions(eventId: string): Promise<Deduction[]> {
   try {
-    const data = await supabaseQuery("EventDeductions", `eventId=eq.${encodeURIComponent(eventId)}&limit=1`);
-    if (!data.length || !data[0].deductions) return [];
-    const parsed = typeof data[0].deductions === "string" ? JSON.parse(data[0].deductions) : data[0].deductions;
-    return Array.isArray(parsed)
-      ? parsed
-          .filter((d: any) => d.amount > 0)
-          .map((d: any, i: number) => ({
-            id: `${eventId}-${i}`,
+    // eventId u EventDeductions može biti i lista odvojena zarezom
+    const rows = await fetchEventDeductionRows(eventId);
+    const result: Deduction[] = [];
+    for (const row of rows) {
+      if (!row.deductions) continue;
+      const parsed = typeof row.deductions === "string" ? JSON.parse(row.deductions) : row.deductions;
+      if (!Array.isArray(parsed)) continue;
+      parsed
+        .filter((d: any) => parseFloat(d.amount) > 0)
+        .forEach((d: any, i: number) =>
+          result.push({
+            id: `${row.id}-${i}`,
             name: d.name || "Odbitak",
             amount: parseFloat(d.amount) || 0,
-          }))
-      : [];
+          })
+        );
+    }
+    return result;
   } catch {
     return [];
   }

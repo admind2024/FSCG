@@ -26,50 +26,34 @@ import {
 } from "lucide-react";
 import { Skeleton } from "@/components/ui/skeleton";
 import { AnimatedNumber } from "@/components/AnimatedNumber";
-import { SUPABASE_URL, supabaseHeaders } from "@/lib/supabaseConfig";
+import { fetchEventDeductionRows } from "@/lib/supabaseConfig";
 
 async function fetchDeductionsFromSupabase(eventId: string): Promise<Deduction[]> {
   try {
-    // Tabela EventDeductions sa eventId filterom
-    const url = `${SUPABASE_URL}/rest/v1/EventDeductions?eventId=eq.${encodeURIComponent(eventId)}&select=id,eventId,deductions,created_at&limit=1`;
-    console.log("Fetching deductions from Supabase:", url);
-
-    const response = await fetch(url, { headers: supabaseHeaders });
-
-    if (!response.ok) {
-      console.error("Supabase deductions error:", response.status, response.statusText);
-      return [];
-    }
-
-    const data = await response.json();
-    console.log("Raw deductions data:", data);
-
-    if (!data || data.length === 0) {
-      return [];
-    }
-
-    // Uzmi prvi red (trebalo bi biti samo jedan po eventId)
-    const row = data[0];
+    // Tabela EventDeductions — eventId može biti i lista odvojena zarezom
+    const rows = await fetchEventDeductionRows(eventId);
+    console.log("Raw deductions data:", rows);
 
     // deductions kolona je JSON string sa nizom: [{"name": "...", "amount": ...}, ...]
-    let deductionsArray: Deduction[] = [];
+    const deductionsArray: Deduction[] = [];
 
-    if (row.deductions) {
+    for (const row of rows) {
+      if (!row.deductions) continue;
       try {
-        // Parsiraj JSON string
         const parsed = typeof row.deductions === "string" ? JSON.parse(row.deductions) : row.deductions;
 
         if (Array.isArray(parsed)) {
-          deductionsArray = parsed
-            .filter((item: any) => item.amount > 0) // Filtriraj samo one sa iznosom > 0
-            .map((item: any, index: number) => ({
-              id: `${row.id}-${index}`,
-              eventId: row.eventId || eventId,
-              name: item.name || "Nepoznat odbitak",
-              amount: parseFloat(item.amount) || 0,
-              description: item.description || "",
-              createdAt: row.created_at || "",
-            }));
+          parsed
+            .filter((item: any) => parseFloat(item.amount) > 0) // Filtriraj samo one sa iznosom > 0
+            .forEach((item: any, index: number) => {
+              deductionsArray.push({
+                id: `${row.id}-${index}`,
+                eventId,
+                name: item.name || "Nepoznat odbitak",
+                amount: parseFloat(item.amount) || 0,
+                description: item.description || "",
+              });
+            });
         }
       } catch (parseError) {
         console.error("Error parsing deductions JSON:", parseError);
